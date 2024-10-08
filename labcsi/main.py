@@ -29,7 +29,7 @@ def login():
 
 @app.route("/home")
 def home():
-    data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
+    lol.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
     #lol.encriptar_posresults()
     if "username" not in session:  # Verifica si el usuario está en la sesión
         flash("Por favor, inicia sesión para continuar", "danger")
@@ -50,7 +50,7 @@ def register_user():
     email = request.form['email']
 
     # Llamar a la función registrar_usuario de data_management.py
-    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
+    status, message = lol.registrar_usuario(username, password, name, surname1, surname2, email)
     if status == 0:
         flash("Registro exitoso", "success")
         return redirect("/login")
@@ -62,7 +62,7 @@ def register_user():
 @app.route("/test/<string:name_test>")
 def mostrar_test(name_test):
     # Obtener los detalles del test
-    test = data_management.obtener_test(name_test)
+    test = lol.obtener_test(name_test)
     if isinstance(test, str):  # Si hubo un error al obtener el test
         flash(test, "danger")
         return redirect("/")
