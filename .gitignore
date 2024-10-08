@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# IDE configuration (if using PyCharm/IntelliJ)
+.idea/
+
+# Ignore JSON files (optional, if they are environment-specific)
+*.json
