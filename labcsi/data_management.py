@@ -2,21 +2,22 @@ import bcrypt
 from cryptography.fernet import Fernet
 import sql  # Importar la conexión a la base de datos y el cursor de sql.py
 
+
 # Función para registrar usuarios en la base de datos
 def registrar_usuario(username, password, name, surname1, surname2, email):
     if username == "":
         return (2, "Username cannot be empty")
     if password == "":
         return (3, "Password cannot be empty")
-
-    # Generar un salt y hashear la contraseña
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode(), salt)
-
     if sql.comprobar_existencia_usuario(username):
         return (1, "Username already exists")
 
-    return sql.insertar_usuario(username, hashed_password.decode(), name, surname1, surname2, email)
+    pswd_hash = hash_password(password)
+
+    # No encriptamos el username porque se usa en referencias en la base de datos
+    encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos(name, surname1, surname2, email)
+
+    return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2)
 
 
 # Función para autenticar usuarios con la base de datos
@@ -128,7 +129,27 @@ def generar_clave():
 def cargar_clave():
     return open("clave.key", "rb").read()
 
+def hash_password(password):
+    # Generar un salt y hashear la contraseña
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode(), salt).decode()
+
+# TODO: Mover a otra carpeta las cosas de encriptar y tal?
 ####ENCRIPTAR COSAS######
+def encriptar_datos(*args):
+    key = cargar_clave()
+    f = Fernet(key)
+
+    encrypted_values = tuple(f.encrypt(arg.encode()).decode() for arg in args)
+    return encrypted_values
+
+def decriptar_datos(*args):
+    key = cargar_clave()
+    f = Fernet(key)
+
+    decrypted_values = tuple(f.decrypt(arg.encode()).decode() for arg in args)
+    return decrypted_values
+
 def encriptar_respuestas(respuestas, resultado):
     # Cargar la clave de encriptación
     key = cargar_clave()
@@ -144,7 +165,7 @@ def encriptar_respuestas(respuestas, resultado):
     return respuestas_encriptadas, resultado_encriptado
 
 # Función para guardar respuestas y calcular el resultado encriptado
-def guardar_y_calcular_resultado(username, name_test, preguntas, respuestas):
+def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas):
     # Primero, guardar las respuestas del usuario llamando a guardar_respuestas
     status, message = guardar_respuestas(username, name_test, preguntas, respuestas)
 

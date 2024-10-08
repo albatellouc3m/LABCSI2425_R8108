@@ -37,6 +37,6 @@ def insertar_usuario(username, password, email, name, surname1, surname2):
         return (0, "Success")
     except mysql.connector.Error as err:
         db.rollback()
-        return (4, f"Database error: {err}")
+        return (4, f"Database error: {err}, length: {len(email)}")
 
 
