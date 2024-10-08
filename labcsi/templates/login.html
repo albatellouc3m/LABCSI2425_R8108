@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width",
+          initial-scale="1.0">
+    <title>TESTS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/login.css') }}">
+</head>
+
+<body>
+    <div class="login">
+        <img src="{{ url_for('static', filename='images/quizzLog.svg') }}" alt="quizzLog" class="imagen-Log">
+
+        <form action="/login" method="POST">
+            <h1>INICIO DE SESION</h1>
+
+            <div class="column-half">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" placeholder="Inserta tu username..." required>
+            </div>
+            <div class="column-half">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" placeholder="Inserta tu contraseña..." required>
+            </div>
+            <div class="row-full">
+                <input type="submit" value="Login" class="Login">
+                   <a href="/" class="cuenta">no tienes cuenta?</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

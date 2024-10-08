@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado del Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/mostrar_resultado.css') }}">
+
+</head>
+<body>
+    <div class="resultado">
+        <h1>Resultado del Test: {{ name_test }}</h1>
+        <p>Tu resultado es: <strong>{{ result }}</strong></p>
+        <a href="/home">Volver a la página principal</a>
+    </div>
+</body>
+</html>

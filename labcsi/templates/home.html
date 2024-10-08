@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width",
+          initial-scale="1.0">
+    <title>TESTS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/home.css') }}">
+</head>
+
+<body>
+    <nav>
+        <ul class="main-menu">
+            <li class="main-menu_item"><a href="/logout" class="main-menu_link">Cerrar sesión</a></li>
+            <li class="main-menu_item"><a href="/amigos" class="main-menu_link">Amigos</a></li>
+            <li class="main-menu_item"><a href="/perfil" class="main-menu_link">Mi Perfil</a></li>
+            <li class="main-menu_item"><img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil"></li>
+        </ul>
+    </nav>
+
+    <h1>Bienvenido, {{ username }}</h1>
+
+    <div class="todos-test">
+        <div class="test">
+            <h2>TEST 1</h2>
+            <h3> ¿Qué casa de harry potter eres?</h3>
+            <img src="{{ url_for('static', filename='images/harrypotter.svg') }}" alt="harrypotter" class="imagen-quizz">
+            <a href="/test/Test de Harry Potter" class="click">click para hacer el test</a>
+        </div>
+        <div class="test">
+            <h2>TEST 2</h2>
+            <h3>¿Qué tipo de pizza eres?</h3>
+            <img src="{{ url_for('static', filename='images/pizza.svg') }}" alt="pizza" class="imagen-quizz">
+            <a href="/test/Test de Sabores de Pizza" class="click">click para hacer el test</a>
+        </div>
+        <div class="test">
+            <h2>TEST 3</h2>
+            <h3>¿Qué electrodoméstico eres?</h3>
+            <img src="{{ url_for('static', filename='images/electrodomesticos.svg') }}" alt="electrodomestico" class="imagen-quizz">
+            <a href="/test/Test de Electrodomesticos" class="click">click para hacer el test</a>
+        </div>
+        <div class="test">
+            <h2>TEST 4</h2>
+            <h3>¿Qué dedo del pie eres?</h3>
+            <img src="{{ url_for('static', filename='images/pie.svg') }}" alt="dedopie" class="imagen-quizz">
+            <a href="/test/Test de Dedo Pie" class="click">click para hacer el test</a>
+        </div>
+        <div class="test">
+            <h2>TEST 5</h2>
+            <h3>¿Cuál es tu personalidad?</h3>
+            <img src="{{ url_for('static', filename='images/personalidad.svg') }}" alt="personalidad" class="imagen-quizz">
+            <a href="/test/Test de Personalidad" class="click">click para hacer el test</a>
+        </div>
+        <div class="test">
+            <h2>TEST 6</h2>
+            <h3>¿Qué comida combina con tu personalidad?</h3>
+            <img src="{{ url_for('static', filename='images/comida.svg') }}" alt="comida" class="imagen-quizz">
+            <a href="/test/Test de Comida" class="click">click para hacer el test</a>
+        </div>
+    </div>
+</body>
+</html>
