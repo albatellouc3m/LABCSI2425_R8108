@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, session, url_for
 import data_management
+
 app = Flask(__name__)
 app.secret_key = "caca"
 
@@ -13,7 +14,6 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # Llamar a la función autentificar_usuario de data_management.py
         status, message = data_management.autentificar_usuario(username, password)
         if status == 0:  # Si la autenticación fue exitosa
             session["username"] = username  # Almacenar el nombre de usuario en la sesión
@@ -29,7 +29,7 @@ def login():
 @app.route("/home")
 def home():
     data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
-    #lol.encriptar_posresults()
+    #data_management.encriptar_posresults()
     if "username" not in session:  # Verifica si el usuario está en la sesión
         flash("Por favor, inicia sesión para continuar", "danger")
         return redirect(url_for("login"))
@@ -50,6 +50,7 @@ def register_user():
 
     # Llamar a la función registrar_usuario de data_management.py
     status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
+    app.logger.debug(f"Code {str(status)}: {message}")
     if status == 0:
         flash("Registro exitoso", "success")
         return redirect("/login")

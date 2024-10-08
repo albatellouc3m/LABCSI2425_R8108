@@ -16,6 +16,11 @@ db = mysql.connector.connect(
 
 cursor = db.cursor()
 
+def comprobar_existencia_usuario(username):
+    # Verificar si el usuario ya existe
+    cursor.execute("SELECT * FROM Users WHERE username = %s", (username,))
+    return cursor.fetchone()
+
 
 # Función para insertar un usuario en la base de datos
 def insertar_usuario(username, password, email, name, surname1, surname2):
@@ -29,9 +34,9 @@ def insertar_usuario(username, password, email, name, surname1, surname2):
     try:
         cursor.execute(sql, values)  # Ejecutar la consulta con los valores
         db.commit()  # Confirmar los cambios
-        return True
+        return (0, "Success")
     except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return False
+        db.rollback()
+        return (4, f"Database error: {err}")
 
 

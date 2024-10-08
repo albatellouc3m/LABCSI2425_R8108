@@ -13,21 +13,10 @@ def registrar_usuario(username, password, name, surname1, surname2, email):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode(), salt)
 
-    # Verificar si el usuario ya existe
-    sql.cursor.execute("SELECT * FROM Users WHERE username = %s", (username,))
-    result = sql.cursor.fetchone()
-
-    if result:
+    if sql.comprobar_existencia_usuario(username):
         return (1, "Username already exists")
 
-    # Insertar el nuevo usuario en la base de datos
-    try:
-        sql.insertar_usuario(username, hashed_password.decode(), name, surname1, surname2, email)
-        sql.db.commit()
-        return (0, "Success")
-    except Exception as e:
-        sql.db.rollback()
-        return (4, f"Database error: {e}")
+    return sql.insertar_usuario(username, hashed_password.decode(), name, surname1, surname2, email)
 
 
 # Función para autenticar usuarios con la base de datos
