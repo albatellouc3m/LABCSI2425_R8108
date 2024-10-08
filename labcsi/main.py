@@ -28,7 +28,7 @@ def login():
 
 @app.route("/home")
 def home():
-    data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
+    #data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
     #data_management.encriptar_posresults()
     if "username" not in session:  # Verifica si el usuario está en la sesión
         flash("Por favor, inicia sesión para continuar", "danger")
@@ -90,7 +90,7 @@ def guardar_respuestas():
     respuestas = request.form.getlist('respuestas[]')
 
     # Llamar a la función en data_management.py que guarda las respuestas y calcula el resultado
-    status, message, result, description = data_management.guardar_y_calcular_resultado(username, name_test, preguntas, respuestas)
+    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas)
 
     if status == 0:
         flash(message, "success")
