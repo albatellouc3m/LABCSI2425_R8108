@@ -13,10 +13,8 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # Supongamos que tienes una función en `data_management.py` que autentifica al usuario
-        from data_management import autentificar_usuario
-
-        status, message = autentificar_usuario(username, password)
+        # Llamar a la función autentificar_usuario de data_management.py
+        status, message = data_management.autentificar_usuario(username, password)
         if status == 0:  # Si la autenticación fue exitosa
             session["username"] = username  # Almacenar el nombre de usuario en la sesión
             flash("Inicio de sesión exitoso", "success")
@@ -24,12 +22,13 @@ def login():
         else:
             flash(message, "danger")  # Mostrar un mensaje de error si el login falló
             return redirect(url_for("login"))
-    return render_template("login.html")
+    else:
+        return render_template("login.html")
 
 
 @app.route("/home")
 def home():
-    lol.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
+    data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
     #lol.encriptar_posresults()
     if "username" not in session:  # Verifica si el usuario está en la sesión
         flash("Por favor, inicia sesión para continuar", "danger")
@@ -50,7 +49,7 @@ def register_user():
     email = request.form['email']
 
     # Llamar a la función registrar_usuario de data_management.py
-    status, message = lol.registrar_usuario(username, password, name, surname1, surname2, email)
+    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
     if status == 0:
         flash("Registro exitoso", "success")
         return redirect("/login")
@@ -62,7 +61,7 @@ def register_user():
 @app.route("/test/<string:name_test>")
 def mostrar_test(name_test):
     # Obtener los detalles del test
-    test = lol.obtener_test(name_test)
+    test = data_management.obtener_test(name_test)
     if isinstance(test, str):  # Si hubo un error al obtener el test
         flash(test, "danger")
         return redirect("/")

@@ -10,3 +10,5 @@ __pycache__/
 
 # Ignore JSON files (optional, if they are environment-specific)
 *.json
+
+database_info.txt

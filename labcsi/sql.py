@@ -1,10 +1,17 @@
 import mysql.connector
 
+# Load database configuration from text file
+db_config = {}
+with open('database_info.txt', 'r') as file:
+    for line in file:
+        key, value = line.strip().split('=')
+        db_config[key] = value
+
 db = mysql.connector.connect(
-    user='root',
-    password='Alba.2004',
-    host='localhost',
-    database='LABCSI2425_R8108_db2'
+    user=db_config['user'],
+    password=db_config['password'],
+    host=db_config['host'],
+    database=db_config['database']
 )
 
 cursor = db.cursor()
