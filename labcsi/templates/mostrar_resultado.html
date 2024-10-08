@@ -9,9 +9,11 @@
 </head>
 <body>
     <div class="resultado">
-        <h1>Resultado del Test: {{ name_test }}</h1>
-        <p>Tu resultado es: <strong>{{ result }}</strong></p>
-        <p>{{description}}</p>
+        <h1>Resultado del {{ name_test }}</h1>
+        <p>Tu resultado es:</p>
+        <div class="result">
+            <p>{{ result }}</p>
+        </div>
 
         <!-- Mostrar imagen según el resultado -->
         <div class="imagen-resultado">
@@ -71,7 +73,7 @@
                 <img src="{{ url_for('static', filename='images/dedo_pequeno.svg') }}" alt="Dedo Pequeño">
 
             {% elif result == 'Eres una Pizza de Pepperoni' %}
-                <img src="{{ url_for('static', filename='images/pizza_pepperoni.svg') }}" alt="Pizza de Pepperoni">
+                <img src="{{ url_for('static', filename='images/pepperoni.svg') }}" alt="Pizza de Pepperoni">
             {% elif result == 'Eres un Tazón de Sopa Ramen' %}
                 <img src="{{ url_for('static', filename='images/ramen.svg') }}" alt="Sopa Ramen">
             {% elif result == 'Eres una Ensalada de Frutas' %}
@@ -80,10 +82,15 @@
                 <img src="{{ url_for('static', filename='images/sandwich.svg') }}" alt="Sándwich de Mantequilla y Mermelada">
             {% elif result == 'Eres un Pepinillo en Vinagre' %}
                 <img src="{{ url_for('static', filename='images/pepinillo.svg') }}" alt="Pepinillo en Vinagre">
-
+            {% endif %}
         </div>
 
-        <a href="/home">Volver a la página principal</a>
+        <div class="description">
+            <p>{{description}}</p>
+        </div>
+
+
+        <a href="/home" class="volver">Volver a la página principal</a>
     </div>
 </body>
 </html>

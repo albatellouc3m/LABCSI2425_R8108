@@ -56,11 +56,9 @@ input[type=text], input[type=password] {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 1s ease;
 }
 /*boton de enviar*/
 input[type=submit] {
-    font-family: 'Spiny Lobster', Verdana;
     font-size: 1vw;
     color: white;
     background-color: #96C2DB;

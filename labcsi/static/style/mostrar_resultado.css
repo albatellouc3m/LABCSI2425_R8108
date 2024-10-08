@@ -1,6 +1,6 @@
 /* Estilos generales */
 body {
-    font-family: Arial, sans-serif;
+    font-family: Verdana, sans-serif;
     margin: 0;
     padding: 20px;
     background-color: #f4f4f4;
@@ -8,9 +8,50 @@ body {
 
 
 .resultado{
+    background-color: #E5EDF1;
+    border-radius: 10%;
     display: flex;
     flex-direction: column;
+    justify-content: justify;
+    align-items: center;
+    margin: 5vh 20vw;
+    margin-top: 5vh;
+}
+
+.result p{
+    font-size: 4vh;
+    margin: 0;
+}
+
+.description{
+    font-size: 2vh;
+    padding: 0 10vw;
+    display: flex;
+    text-align: center;
+}
+
+img{
+    width: 20vw;
+    height: auto;
+    padding: 4vh 0;
+}
+
+.volver{
+    text-decoration: none;
+    font-size: 1vw;
+    color: white;
+    background-color: #96C2DB;
+    border-radius: 25px;
+    margin-top: 3vh;
+    margin-bottom: 5vh;
+    padding: 2% 5%;
+    display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 1s ease;
+}
 
+.volver:hover{
+    background-color: #88B0C7;
 }
