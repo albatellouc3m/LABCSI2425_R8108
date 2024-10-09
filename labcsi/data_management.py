@@ -1,7 +1,12 @@
 import bcrypt
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
 import sql  # Importar la conexión a la base de datos y el cursor de sql.py
-
+import base64
 
 # Función para registrar usuarios en la base de datos
 def registrar_usuario(username, password, name, surname1, surname2, email):
@@ -15,7 +20,7 @@ def registrar_usuario(username, password, name, surname1, surname2, email):
     pswd_hash = hash_password(password)
 
     # No encriptamos el username porque se usa en referencias en la base de datos
-    encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos(name, surname1, surname2, email)
+    encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos_registro(name, surname1, surname2, email)
 
     return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2)
 
@@ -89,22 +94,6 @@ def obtener_test(name_test):
         return f"Error al obtener el test: {e}"
 
 
-# Guardar las respuestas del usuario en la base de datos
-def guardar_respuestas(username, name_test, preguntas, respuestas):
-    try:
-        for pregunta, respuesta in zip(preguntas, respuestas):
-            # Insertar cada respuesta del usuario en la tabla UserAnswers
-            sql.cursor.execute(
-                "INSERT INTO UserAnswers (username, name_test, question, puntuacion) VALUES (%s, %s, %s, %s)",
-                (username, name_test, pregunta, respuesta)
-            )
-        sql.db.commit()
-        return (0, "Respuestas guardadas correctamente")
-    except Exception as e:
-        sql.db.rollback()
-        return (1, f"Error al guardar las respuestas: {e}")
-
-
 # Obtener respuestas del usuario para un test específico
 def obtener_respuestas(name_test, username):
     try:
@@ -136,100 +125,113 @@ def hash_password(password):
 
 # TODO: Mover a otra carpeta las cosas de encriptar y tal?
 ####ENCRIPTAR COSAS######
-def encriptar_datos(*args):
+def encriptar_datos_registro(*args):
     key = cargar_clave()
     f = Fernet(key)
 
     encrypted_values = tuple(f.encrypt(arg.encode()).decode() for arg in args)
+    # If only one argument was passed, return just the single encrypted value
+    if len(encrypted_values) == 1:
+        return encrypted_values[0]
+
     return encrypted_values
 
-def decriptar_datos(*args):
+def desencriptar_datos_registro(*args):
     key = cargar_clave()
     f = Fernet(key)
 
     decrypted_values = tuple(f.decrypt(arg.encode()).decode() for arg in args)
+    # If only one argument was passed, return just the single decrypted value
+    if len(decrypted_values) == 1:
+        return decrypted_values[0]
+
     return decrypted_values
 
-def encriptar_respuestas(respuestas, resultado):
-    # Cargar la clave de encriptación
-    key = cargar_clave()
-    f = Fernet(key)
+def generar_clave_desde_contraseña(password, salt=None):
+    # Para generar la key para encriptar por primera vez creamos un SALT, cuando vayamos a desencriptar generaremos la clave con el salt con la que se creo
+    if salt is None:
+        salt = os.urandom(16)  # 16 bytes de salt
 
-    # Encriptar las respuestas (suponemos que respuestas es una lista de strings)
-    respuestas_encriptadas = [f.encrypt(respuesta.encode()).decode() for respuesta in respuestas]
+    # Función PBKDF2 para derivar la clave
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+
+    # Derivar la clave a partir de la contraseña
+    key = kdf.derive(password.encode())  # La contraseña debe estar en bytes
+    return key, salt
+
+def encriptar_datos_con_clave_derivada(data, password):
+    key, salt = generar_clave_desde_contraseña(password)
+
+    # Crear un nonce aleatorio (12 bytes para GCM)
+    nonce = os.urandom(12)
+
+    # Cifrar los datos con AES-GCM
+    aesgcm = AESGCM(key)
+    ciphertext = aesgcm.encrypt(nonce, data.encode(), None)
+
+    # Codificar el ciphertext como Base64
+    encrypted_data = base64.b64encode(salt + nonce + ciphertext).decode('utf-8')
+
+    # Retornar el texto cifrado codificado
+    return encrypted_data
+
+def decriptar_datos_con_clave_derivada(encrypted_data, password):
+    encrypted_data = base64.b64decode(encrypted_data)
+
+    salt = encrypted_data[:16]
+    nonce = encrypted_data[16:28]
+    ciphertext = encrypted_data[28:]
+
+    # Generar la clave nuevamente a partir de la contraseña y el salt
+    key, _ = generar_clave_desde_contraseña(password, salt)
+
+    # Descifrar los datos con AES-GCM
+    aesgcm = AESGCM(key)
+    plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+
+    return plaintext.decode()
+
+def encriptar_respuestas(respuestas, resultado, description, password):
+    # Encriptar las respuestas utilizando la clave derivada de la contraseña
+    respuestas_encriptadas = [encriptar_datos_con_clave_derivada(respuesta, password) for respuesta in respuestas]
 
     # Encriptar el resultado
-    resultado_encriptado = f.encrypt(resultado.encode()).decode()
+    resultado_encriptado = encriptar_datos_con_clave_derivada(resultado, password)
+
+    # Encriptar la descripcion
+    descripcion_encriptada = encriptar_datos_con_clave_derivada(description, password)
 
     # Devolver las respuestas y el resultado encriptados
-    return respuestas_encriptadas, resultado_encriptado
+    return respuestas_encriptadas, resultado_encriptado, descripcion_encriptada
+
 
 # Función para guardar respuestas y calcular el resultado encriptado
-def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas):
+def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, password):
     # Primero, guardar las respuestas del usuario llamando a guardar_respuestas
-    status, message = guardar_respuestas(username, name_test, preguntas, respuestas)
+    status, message = sql.guardar_respuestas(username, name_test, preguntas, respuestas)
+    if status != 0:
+        return status, message, None, None
 
-    if status == 0:  # Si las respuestas se guardaron correctamente
-        try:
-            # Calcular el resultado del test usando el procedimiento almacenado
-            sql.cursor.execute("CALL calcular_resultado_test(%s, %s)", (username, name_test))
-            sql.db.commit()
+    # Si las respuestas se guardaron correctamente
+    sql.calcular_resultado(username, name_test)
 
-            # Recuperar el resultado calculado de la tabla Results
-            sql.cursor.execute(
-                "SELECT result, desc_result FROM Results WHERE username = %s AND name_test = %s ORDER BY date_result DESC LIMIT 1", (username, name_test))
-            resultado, description = sql.cursor.fetchone()  # Tomar los valores del resultado más reciente
+    id_resultado, resultado, description = sql.recuperar_resultado(username, name_test)
 
+    # Encriptar las respuestas y el resultado
+    respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, password)
 
-            # Encriptar las respuestas y el resultado
-            respuestas_encriptadas, resultado_encriptado = encriptar_respuestas(respuestas, resultado)
+    # Actualizar las respuestas y el resultado encriptadas
+    status, message = sql.guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas)
+    if status != 0:
+        return status, message, None, None
+    status, message = sql.guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada)
+    if status != 0:
+        return status, message, None, None
 
-            # Actualizar las respuestas y el resultado encriptadas
-            actualizar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas)
-            actualizar_resultado_encriptado(username, name_test, resultado_encriptado) #nofunciona
-
-            key = cargar_clave()
-            f = Fernet(key)
-
-            resultado_encriptado = f.decrypt(resultado_encriptado.encode()).decode()
-
-            return (0, "Respuestas guardadas y resultado calculado correctamente", resultado_encriptado, description)
-        except Exception as e:
-            sql.db.rollback()  # Revertir en caso de error durante el cálculo del resultado
-            return (1, f"Error al calcular el resultado: {e}", None, None)
-    else:
-        return (1, message, None, None)  # Retornar el error si no se pudieron guardar las respuestas
-
-def actualizar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas):
-    try:
-        # Actualizar las respuestas encriptadas en la base de datos
-        for pregunta, respuesta_encriptada in zip(preguntas, respuestas_encriptadas):
-            sql.cursor.execute(
-                "UPDATE UserAnswers SET puntuacion = %s WHERE username = %s AND name_test = %s AND question = %s",
-                (respuesta_encriptada, username, name_test, pregunta)
-            )
-        sql.db.commit()  # Confirmar la transacción si todo va bien
-    except Exception as e:
-        sql.db.rollback()  # Revertir en caso de error
-        print(f"Error al actualizar las respuestas encriptadas: {e}")
-
-def actualizar_resultado_encriptado(username, name_test, resultado_encriptado):
-    try:
-        # Verificar si hay filas que coincidan con username y name_test
-        sql.cursor.execute("SELECT COUNT(*) FROM Results WHERE username = %s AND name_test = %s", (username, name_test))
-        count = sql.cursor.fetchone()[0]
-
-        if count == 0:
-            print(f"No se encontró ningún resultado para username: {username} y name_test: {name_test}")
-            return
-
-        # Actualizar el resultado encriptado si hay coincidencias
-        sql.cursor.execute(
-            "UPDATE Results SET result = %s WHERE username = %s AND name_test = %s",
-            (resultado_encriptado, username, name_test)
-        )
-        sql.db.commit()
-        print(f"Resultado encriptado actualizado correctamente para username: {username} y name_test: {name_test}")
-    except Exception as e:
-        sql.db.rollback()
-        print(f"Error al actualizar el resultado encriptado: {e}")
+    return 0, "Respuestas guardadas y resultado calculado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes", resultado, description

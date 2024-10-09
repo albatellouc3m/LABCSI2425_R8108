@@ -19,9 +19,12 @@ def login():
         status, message = autentificar_usuario(username, password)
         if status == 0:  # Si la autenticación fue exitosa
             session["username"] = username  # Almacenar el nombre de usuario en la sesión
+            session["password"] = data_management.encriptar_datos_registro(password)
+            app.logger.debug("Inicio de sesión exitoso")
             flash("Inicio de sesión exitoso", "success")
             return redirect(url_for("home"))  # Redirigir a la página de inicio
         else:
+            app.logger.debug("Fallo al iniciar sesion")
             flash(message, "danger")  # Mostrar un mensaje de error si el login falló
             return redirect(url_for("login"))
     return render_template("login.html")
@@ -29,7 +32,7 @@ def login():
 
 @app.route("/home")
 def home():
-    data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
+    #data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
     #lol.encriptar_posresults()
     if "username" not in session:  # Verifica si el usuario está en la sesión
         flash("Por favor, inicia sesión para continuar", "danger")
@@ -51,10 +54,13 @@ def register_user():
 
     # Llamar a la función registrar_usuario de data_management.py
     status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
+
     if status == 0:
         flash("Registro exitoso", "success")
+        app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
         return redirect("/login")
     else:
+        app.logger.debug(f"Registro fallido {message}")
         flash(message, "danger")
         return redirect("/")
 
@@ -90,13 +96,16 @@ def guardar_respuestas():
     respuestas = request.form.getlist('respuestas[]')
 
     # Llamar a la función en data_management.py que guarda las respuestas y calcula el resultado
-    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas)
+    password = data_management.desencriptar_datos_registro(session["password"])
+    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, password)
 
     if status == 0:
-        flash(message, "success")
+        flash(message, "Success")
+        app.logger.debug(message)
         return render_template("mostrar_resultado.html", name_test=name_test, result=result, description=description)
     else:
         flash(message, "danger")
+        app.logger.debug(f"Fallo al guardar respuestas: {message}")
         return redirect("/home")
 
 # Ruta opcional para ver las respuestas del usuario a un test
