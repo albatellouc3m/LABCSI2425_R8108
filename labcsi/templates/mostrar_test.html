@@ -11,20 +11,27 @@
 
     <form action="/guardar_respuestas" method="POST">
         <input type="hidden" name="name_test" value="{{ test[0] }}">
-
+        <div class="questions">
         {% for pregunta in preguntas %}
             <div class="question-container">
                 <p class="question-text">{{ pregunta[0] }}</p>  <!-- Muestra la pregunta -->
                 <input type="hidden" name="question[]" value="{{ pregunta[0] }}">
 
                 <div class="slider-container">
-                    <label for="respuesta_{{ loop.index }}" class="label-left">Disagree</label>
+
+                        <div class="slider-labels">
+                            <span class="label">Casi Nada</span>
+                            <span class="label">Poco</span>
+                            <span class="label">Mas o menos</span>
+                            <span class="label">Bastante</span>
+                            <span class="label">Mucho</span>
+                        </div>
+
                     <input type="range" id="respuesta_{{ loop.index }}" name="respuestas[]" min="1" max="5" step="1" class="slider" required>
-                    <label for="respuesta_{{ loop.index }}" class="label-right">Agree</label>
                 </div>
             </div>
         {% endfor %}
-
+        </div>
         <button type="submit" class="submit-btn">Enviar respuestas</button>
     </form>
 </body>

@@ -186,7 +186,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas):
 
             # Actualizar las respuestas y el resultado encriptadas
             actualizar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas)
-            #actualizar_resultado_encriptado(username, name_test, resultado_encriptado) #nofunciona
+            actualizar_resultado_encriptado(username, name_test, resultado_encriptado) #nofunciona
 
             key = cargar_clave()
             f = Fernet(key)

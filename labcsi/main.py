@@ -90,7 +90,7 @@ def guardar_respuestas():
     respuestas = request.form.getlist('respuestas[]')
 
     # Llamar a la función en data_management.py que guarda las respuestas y calcula el resultado
-    status, message, result, description = data_management.guardar_y_calcular_resultado(username, name_test, preguntas, respuestas)
+    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas)
 
     if status == 0:
         flash(message, "success")
