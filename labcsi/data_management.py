@@ -235,3 +235,22 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, pas
         return status, message, None, None
 
     return 0, "Respuestas guardadas y resultado calculado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes", resultado, description
+
+
+
+# Obtener los resultados de los tests del usuario
+def obtener_resultados_usuario(username):
+    try:
+        resultados = sql.recuperar_resultados_usuario(username)
+        return resultados
+    except Exception as e:
+        return f"Error al obtener los resultados: {e}"
+
+# Obtener las respuestas del usuario para un test específico
+def obtener_respuestas_usuario(username, name_test):
+    try:
+        respuestas = sql.recuperar_respuestas_usuario(username, name_test)
+        return respuestas
+    except Exception as e:
+        return f"Error al obtener las respuestas: {e}"
+

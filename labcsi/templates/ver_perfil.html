@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PERFIL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/ver_perfil.css') }}">
+</head>
+<body>
+    <h1>Perfil de {{ username }}</h1>
+
+    <div class="resultados">
+        <h2>Resultados de Tests</h2>
+        {% if resultados %}
+            <ul>
+                {% for resultado in resultados %}
+                    <li>
+                        <strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }} <br>
+                        <em>Descripción:</em> {{ resultado[2] }} <br>
+                        <em>Fecha:</em> {{ resultado[3] }} <br>
+                        <a href="{{ url_for('ver_respuestas_usuario', name_test=resultado[0]) }}">Ver Respuestas</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No has completado ningún test aún.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

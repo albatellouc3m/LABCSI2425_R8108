@@ -108,7 +108,7 @@ def guardar_respuestas():
         app.logger.debug(f"Fallo al guardar respuestas: {message}")
         return redirect("/home")
 
-# Ruta opcional para ver las respuestas del usuario a un test
+"""# Ruta opcional para ver las respuestas del usuario a un test
 @app.route("/ver_respuestas/<string:name_test>")
 def ver_respuestas(name_test):
     username = request.form['username']  # Asumimos que el usuario está autenticado
@@ -118,7 +118,7 @@ def ver_respuestas(name_test):
         flash(respuestas, "danger")
         return redirect("/")
 
-    return render_template("ver_respuestas.html", respuestas=respuestas)
+    return render_template("ver_respuestas.html", respuestas=respuestas)"""
 
 @app.route("/logout")
 def logout():
@@ -126,6 +126,31 @@ def logout():
     flash("Has cerrado sesión exitosamente", "success")
     return redirect(url_for("login"))
 
+@app.route("/perfil")
+def perfil():
+    if "username" not in session:
+        flash("Por favor, inicia sesión para continuar", "danger")
+        return redirect(url_for("login"))
 
+    username = session["username"]
+    resultados = data_management.obtener_resultados_usuario(username)
+
+    return render_template("ver_perfil.html", username=username, resultados=resultados)
+
+
+@app.route("/ver_respuestas/<string:name_test>")
+def ver_respuestas_usuario(name_test):
+    if "username" not in session:
+        flash("Por favor, inicia sesión para continuar", "danger")
+        return redirect(url_for("login"))
+
+    username = session["username"]  # Usamos el nombre de usuario de la sesión, en lugar de request.form
+    respuestas = data_management.obtener_respuestas_usuario(username, name_test)
+
+    if isinstance(respuestas, str):  # Si hubo un error
+        flash(respuestas, "danger")
+        return redirect(url_for("perfil"))
+
+    return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
 app.run(debug=True)

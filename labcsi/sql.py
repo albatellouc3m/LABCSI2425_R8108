@@ -99,3 +99,14 @@ def guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion
     except Exception as e:
         db.rollback()
         return (1,f"Error al guardar el resultado encriptado: {e}, {len(descripcion_encriptada)}")
+
+
+# para ver_perfil
+def recuperar_resultados_usuario(username):
+    cursor.execute("SELECT name_test, result, desc_result, date_result FROM Results WHERE username = %s ORDER BY date_result DESC", (username,))
+    return cursor.fetchall()
+
+# Recuperar las respuestas del usuario para un test específico
+def recuperar_respuestas_usuario(username, name_test):
+    cursor.execute("SELECT question, puntuacion FROM UserAnswers WHERE username = %s AND name_test = %s", (username, name_test))
+    return cursor.fetchall()
