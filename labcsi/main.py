@@ -7,6 +7,7 @@ app.secret_key = "caca"
 def register():
     return render_template("register.html")
 
+# TODO; Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
