@@ -72,12 +72,14 @@ def mostrar_test(name_test):
     test = data_management.obtener_test(name_test)
     if isinstance(test, str):  # Si hubo un error al obtener el test
         flash(test, "danger")
+        app.logger.debug(test)
         return redirect("/")
 
     # Obtener las preguntas del test
     preguntas = data_management.obtener_preguntas(name_test)
     if isinstance(preguntas, str):  # Si hubo un error al obtener las preguntas
         flash(preguntas, "danger")
+        app.logger.debug(preguntas)
         return redirect("/")
 
     # Renderizar la plantilla y pasar los datos
@@ -124,18 +126,21 @@ def ver_respuestas(name_test):
 @app.route("/logout")
 def logout():
     session.pop("username", None)  # Eliminar el nombre de usuario de la sesión
-    flash("Has cerrado sesión exitosamente", "success")
+    app.logger.debug("Has cerrado sesión exitosamente")
     return redirect(url_for("login"))
 
 @app.route("/perfil")
 def perfil():
     if "username" not in session:
-        flash("Por favor, inicia sesión para continuar", "danger")
+        app.logger.debug("Por favor, inicia sesión para continuar")
         return redirect(url_for("login"))
 
     username = session["username"]
     password = data_management.desencriptar_datos_registro(session["password"])
     resultados = data_management.obtener_resultados_usuario(username, password)
+    if isinstance(resultados, str):
+        app.logger.debug(resultados)
+        return redirect("/home")
 
     return render_template("ver_perfil.html", username=username, resultados=resultados)
 
@@ -143,16 +148,15 @@ def perfil():
 @app.route("/ver_respuestas/<string:name_test>")
 def ver_respuestas_usuario(name_test):
     if "username" not in session:
-        flash("Por favor, inicia sesión para continuar", "danger")
+        app.logger.debug("Por favor, inicia sesión para continuar")
         return redirect(url_for("login"))
 
     username = session["username"]  # Usamos el nombre de usuario de la sesión, en lugar de request.form
     password = data_management.desencriptar_datos_registro(session["password"])
     respuestas = data_management.obtener_respuestas_usuario(username, name_test, password)
-
-    if isinstance(respuestas, str):  # Si hubo un error
-        flash(respuestas, "danger")
-        return redirect(url_for("perfil"))
+    if isinstance(respuestas, str):
+        app.logger.debug(respuestas)
+        return redirect("/perfil")
 
     return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
