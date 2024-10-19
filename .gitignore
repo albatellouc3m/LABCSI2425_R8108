@@ -11,4 +11,4 @@ __pycache__/
 # Ignore JSON files (optional, if they are environment-specific)
 *.json
 
-labcsir8108/database_info.txt
+labcsir/database_info.txt

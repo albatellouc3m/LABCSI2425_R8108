@@ -181,7 +181,7 @@ def encriptar_datos_con_clave_derivada(data, password):
     # Retornar el texto cifrado codificado
     return encrypted_data
 
-def decriptar_datos_con_clave_derivada(encrypted_data, password):
+def desencriptar_datos_con_clave_derivada(encrypted_data, password):
     encrypted_data = base64.b64decode(encrypted_data)
 
     salt = encrypted_data[:16]
@@ -194,6 +194,7 @@ def decriptar_datos_con_clave_derivada(encrypted_data, password):
     # Descifrar los datos con AES-GCM
     aesgcm = AESGCM(key)
     plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+    # plaintext = base64.b64encode(aesgcm.decrypt(nonce, ciphertext, None)).decode('utf-8')
 
     return plaintext.decode()
 
@@ -239,18 +240,16 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, pas
 
 
 # Obtener los resultados de los tests del usuario
-def obtener_resultados_usuario(username):
-    try:
-        resultados = sql.recuperar_resultados_usuario(username)
-        return resultados
-    except Exception as e:
-        return f"Error al obtener los resultados: {e}"
+def obtener_resultados_usuario(username, password):
+    resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], password),desencriptar_datos_con_clave_derivada(r[2], password),r[3]) for r in sql.recuperar_resultados_usuario(username)]
+    return resultados_desencriptados
+    # return f"Error al obtener los resultados: {e}"
 
 # Obtener las respuestas del usuario para un test específico
-def obtener_respuestas_usuario(username, name_test):
+def obtener_respuestas_usuario(username, name_test, password):
     try:
-        respuestas = sql.recuperar_respuestas_usuario(username, name_test)
-        return respuestas
+        respuestas_desencriptadas = [(r[0],desencriptar_datos_con_clave_derivada(r[1], password)) for r in sql.recuperar_respuestas_usuario(username, name_test)]
+        return respuestas_desencriptadas
     except Exception as e:
         return f"Error al obtener las respuestas: {e}"
 

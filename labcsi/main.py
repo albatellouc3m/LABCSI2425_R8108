@@ -134,7 +134,8 @@ def perfil():
         return redirect(url_for("login"))
 
     username = session["username"]
-    resultados = data_management.obtener_resultados_usuario(username)
+    password = data_management.desencriptar_datos_registro(session["password"])
+    resultados = data_management.obtener_resultados_usuario(username, password)
 
     return render_template("ver_perfil.html", username=username, resultados=resultados)
 
@@ -146,7 +147,8 @@ def ver_respuestas_usuario(name_test):
         return redirect(url_for("login"))
 
     username = session["username"]  # Usamos el nombre de usuario de la sesión, en lugar de request.form
-    respuestas = data_management.obtener_respuestas_usuario(username, name_test)
+    password = data_management.desencriptar_datos_registro(session["password"])
+    respuestas = data_management.obtener_respuestas_usuario(username, name_test, password)
 
     if isinstance(respuestas, str):  # Si hubo un error
         flash(respuestas, "danger")
