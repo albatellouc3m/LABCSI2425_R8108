@@ -176,10 +176,18 @@ def coger_contraseña_solicitante(solicitante, solicitado):
             "SELECT pass_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'solicitado';",
             (solicitante, solicitado)
         )
-        print("guay")
         return cursor.fetchall()[0][0]
     except Exception as e:
-        print("Nope")
-        print(str(e))
+        db.rollback()
+        return f"fallo al ver amistades: {str(e)}"
+
+def coger_contraseña_amigo(usuario, amigo):
+    try:
+        cursor.execute(
+            "SELECT pass_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'aceptado';",
+            (usuario, amigo)
+        )
+        return cursor.fetchone()[0]
+    except Exception as e:
         db.rollback()
         return f"fallo al ver amistades: {str(e)}"

@@ -169,6 +169,7 @@ def borrar_amigo(friend):
 def añadir_amigo(friend):
     username = session["username"]
     password = session["password"]
+    password = data_management.desencriptar_datos_registro(password)
     data_management.crear_amistad(username, friend, password)
     return redirect(url_for("perfil"))
 
@@ -179,10 +180,10 @@ def enviar_solicitud_amigo():
         return redirect(url_for("login"))
 
     username = session["username"]
-    password = session["password"]
+    password_encriptada = session["password"]
     friend_username = request.form["friend_username"]
 
-    status, message = data_management.crear_solicitud(username, friend_username, password)
+    status, message = data_management.crear_solicitud(username, friend_username, password_encriptada)
 
     if status == 0:
         flash("Solicitud de amistad enviada exitosamente", "success")
@@ -195,7 +196,28 @@ def enviar_solicitud_amigo():
 
 @app.route("/ver_perfil_amigo/<string:friend>", methods=["GET"])
 def ver_perfil_amigo(friend):
-    pass
+    username = session["username"]
+    password = data_management.desencriptar_datos_registro(session["password"])
+
+    contraseña_amigo_encryptada = sql.coger_contraseña_amigo(username, friend)
+    print(contraseña_amigo_encryptada)
+    contraseña_amigo_desencriptada = data_management.desencriptar_datos_con_clave_derivada(contraseña_amigo_encryptada, password)
+    resultados_amigo = data_management.obtener_resultados_usuario(friend, contraseña_amigo_desencriptada)
+    if isinstance(resultados_amigo, str):
+        app.logger.debug(resultados_amigo)
+        return redirect("/home")
+    print(f"{friend},{resultados_amigo}, {contraseña_amigo_desencriptada}")
+    return render_template("ver_resultados_amigo.html", username=friend, resultados=resultados_amigo, contraseña_amigo=contraseña_amigo_desencriptada)
+
+
+# @app.route("/ver_respuestas_amigo/<string:nombre>/<string:name_test>/<string:contraseña_amigo>", methods=["GET"])
+# def ver_respuestas_amigo(nombre, name_test, contraseña_amigo):
+#     respuestas = data_management.obtener_respuestas_usuario(nombre, name_test, contraseña_amigo)
+#     if isinstance(respuestas, str):
+#         app.logger.debug(respuestas)
+#         return redirect("/perfil")
+#
+#     return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
 @app.route("/ver_respuestas/<string:name_test>")
 def ver_respuestas_usuario(name_test):

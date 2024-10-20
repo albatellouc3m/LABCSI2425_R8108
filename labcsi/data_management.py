@@ -182,6 +182,9 @@ def encriptar_datos_con_clave_derivada(data, password):
     return encrypted_data
 
 def desencriptar_datos_con_clave_derivada(encrypted_data, password):
+    print(f"Encrypted data length: {len(encrypted_data)}")
+    print(f"Encrypted data (before base64 decoding): {encrypted_data}")
+
     encrypted_data = base64.b64decode(encrypted_data)
 
     salt = encrypted_data[:16]
@@ -256,8 +259,7 @@ def obtener_respuestas_usuario(username, name_test, password):
         return f"Error al obtener las respuestas: {str(e)}"
 
 
-def crear_solicitud(username, friend_username, password):
-    password_encriptada = encriptar_datos_registro(password)
+def crear_solicitud(username, friend_username, password_encriptada):
     status, message = sql.enviar_solicitud(username, friend_username, password_encriptada)
     return status, message
 
@@ -266,6 +268,8 @@ def crear_amistad(username, friend, password):
     contraseña_solicitante = sql.coger_contraseña_solicitante(friend, username)
     print(f"contraseña solicitante: {contraseña_solicitante}")
     friend_pass = desencriptar_datos_registro(contraseña_solicitante)
+    print(f"friend pass: {friend_pass}")
+    print(f"user pass: {password}")
     username_encripted_pass = encriptar_datos_con_clave_derivada(password, friend_pass)
     friend_encripted_pass = encriptar_datos_con_clave_derivada(friend_pass, password)
     sql.grabar_amistad(username, friend, username_encripted_pass, friend_encripted_pass)

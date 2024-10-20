@@ -31,7 +31,7 @@
             <ul>
                 {% for amigo in amigos %}
                     <li>
-                        <strong>{{ amigo[0] }}</strong><a href="{{ url_for('borrar_amigo', friend=amigo[0]) }}">Borrar Amistad</a>
+                        <strong>{{ amigo[0] }}</strong><a href="{{ url_for('borrar_amigo', friend=amigo[0]) }}">Borrar Amistad</a><a href="{{ url_for('ver_perfil_amigo', friend=amigo[0]) }}"> | Ver Perfil</a>
                     </li>
                 {% endfor %}
             </ul>
@@ -45,7 +45,7 @@
             <ul>
                 {% for solicitud in solicitudes %}
                     <li>
-                        <strong>{{ solicitud[0] }}</strong><a href="{{ url_for('añadir_amigo', friend=solicitud[0]) }}">Añadir Amigo</a><a href="{{ url_for('ver_perfil_amigo', friend=solicitud[0]) }}"> | Ver Perfil</a>
+                        <strong>{{ solicitud[0] }}</strong><a href="{{ url_for('añadir_amigo', friend=solicitud[0]) }}">Añadir Amigo</a>
                     </li>
                 {% endfor %}
             </ul>
