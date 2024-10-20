@@ -246,6 +246,7 @@ def obtener_resultados_usuario(username, password):
     except Exception as e:
         return f"Error al obtener los resultados: {str(e)}"
 
+
 # Obtener las respuestas del usuario para un test específico
 def obtener_respuestas_usuario(username, name_test, password):
     try:
@@ -253,4 +254,39 @@ def obtener_respuestas_usuario(username, name_test, password):
         return respuestas_desencriptadas
     except Exception as e:
         return f"Error al obtener las respuestas: {str(e)}"
+
+
+def crear_solicitud(username, friend_username, password):
+    password_encriptada = encriptar_datos_registro(password)
+    status, message = sql.enviar_solicitud(username, friend_username, password_encriptada)
+    return status, message
+
+
+def crear_amistad(username, friend, password):
+    contraseña_solicitante = sql.coger_contraseña_solicitante(friend, username)
+    print(f"contraseña solicitante: {contraseña_solicitante}")
+    friend_pass = desencriptar_datos_registro(contraseña_solicitante)
+    username_encripted_pass = encriptar_datos_con_clave_derivada(password, friend_pass)
+    friend_encripted_pass = encriptar_datos_con_clave_derivada(friend_pass, password)
+    sql.grabar_amistad(username, friend, username_encripted_pass, friend_encripted_pass)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

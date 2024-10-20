@@ -25,5 +25,41 @@
             <p>No has completado ningún test aún.</p>
         {% endif %}
     </div>
+    <div class="amigos">
+        <h2>Amigos</h2>
+        {% if amigos %}
+            <ul>
+                {% for amigo in amigos %}
+                    <li>
+                        <strong>{{ amigo[0] }}</strong><a href="{{ url_for('borrar_amigo', friend=amigo[0]) }}">Borrar Amistad</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tienes amigos :(</p>
+        {% endif %}
+    </div>
+    <div class="solicitudes">
+        <h2>Solicitudes</h2>
+        {% if solicitudes %}
+            <ul>
+                {% for solicitud in solicitudes %}
+                    <li>
+                        <strong>{{ solicitud[0] }}</strong><a href="{{ url_for('añadir_amigo', friend=solicitud[0]) }}">Añadir Amigo</a><a href="{{ url_for('ver_perfil_amigo', friend=solicitud[0]) }}"> | Ver Perfil</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tienes solicitudes</p>
+        {% endif %}
+    </div>
+    <div class="enviar_solicitud">
+        <h2>Enviar Solicitud de Amistad</h2>
+        <form action="{{ url_for('enviar_solicitud_amigo') }}" method="POST">
+            <label for="friend_username">Nombre de usuario del amigo:</label>
+            <input type="text" id="friend_username" name="friend_username" placeholder="Usuario del amigo" required>
+            <button type="submit">Enviar Solicitud</button>
+        </form>
+    </div>
 </body>
 </html>

@@ -110,3 +110,76 @@ def recuperar_resultados_usuario(username):
 def recuperar_respuestas_usuario(username, name_test):
     cursor.execute("SELECT question, puntuacion FROM UserAnswers WHERE username = %s AND name_test = %s", (username, name_test))
     return cursor.fetchall()
+
+
+def ver_amigos(username):
+    try:
+        cursor.execute(
+            "SELECT username2 FROM friends WHERE username1 = %s AND status = 'aceptado';",
+            username
+        )
+        return cursor.fetchall()
+    except Exception as e:
+        db.rollback()
+        return f"fallo al ver amistades: {str(e)}"
+
+
+def grabar_amistad(username1, username2, pass_user1, pass_user2):
+    cursor.execute(
+        "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
+        (username1, username2, username2, username1)
+    )
+    cursor.execute(
+        "INSERT INTO friends (username1, username2, status, pass_user2) VALUES (%s, %s, 'aceptado', %s), (%s, %s, 'aceptado', %s);",
+        (username1, username2, pass_user2, username2, username1, pass_user1)
+    )
+    db.commit()
+
+
+def borrar_amistad(username1, username2):
+    cursor.execute(
+        "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
+        (username1, username2, username2, username1)
+    )
+    db.commit()
+
+
+def enviar_solicitud(petidor, receptor, pass_petidor):
+    try:
+        # Insert a pending friend request
+        cursor.execute(
+            "INSERT INTO friends (username1, username2, status, pass_user2) VALUES (%s, %s, 'solicitado', %s);",
+            (petidor, receptor, pass_petidor)
+        )
+        db.commit()
+        return (0, "Solicitud enviada")
+    except Exception as e:
+        db.rollback()
+        return (1, f"Error al enviar solicitud: {str(e)}")
+
+
+def ver_solicitudes(username):
+    try:
+        cursor.execute(
+            "SELECT username1 FROM friends WHERE username2 = %s AND status = 'solicitado';",
+            username
+        )
+        return cursor.fetchall()
+    except Exception as e:
+        db.rollback()
+        return f"fallo al ver amistades: {str(e)}"
+
+
+def coger_contraseña_solicitante(solicitante, solicitado):
+    try:
+        cursor.execute(
+            "SELECT pass_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'solicitado';",
+            (solicitante, solicitado)
+        )
+        print("guay")
+        return cursor.fetchall()[0][0]
+    except Exception as e:
+        print("Nope")
+        print(str(e))
+        db.rollback()
+        return f"fallo al ver amistades: {str(e)}"

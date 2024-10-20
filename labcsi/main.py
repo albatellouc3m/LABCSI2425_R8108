@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, session, url_for
 import data_management
+import sql
 app = Flask(__name__)
 app.secret_key = "caca"
 
@@ -123,11 +124,13 @@ def ver_respuestas(name_test):
 
     return render_template("ver_respuestas.html", respuestas=respuestas)"""
 
+
 @app.route("/logout")
 def logout():
     session.pop("username", None)  # Eliminar el nombre de usuario de la sesión
     app.logger.debug("Has cerrado sesión exitosamente")
     return redirect(url_for("login"))
+
 
 @app.route("/perfil")
 def perfil():
@@ -142,8 +145,57 @@ def perfil():
         app.logger.debug(resultados)
         return redirect("/home")
 
-    return render_template("ver_perfil.html", username=username, resultados=resultados)
+    amigos = sql.ver_amigos([username])
+    if isinstance(amigos, str):
+        app.logger.debug(amigos)
+        return redirect("/home")
 
+    solicitudes = sql.ver_solicitudes([username])
+
+    if isinstance(amigos, str):
+        app.logger.debug(amigos)
+        return redirect("/home")
+
+    return render_template("ver_perfil.html", username=username, resultados=resultados, amigos=amigos, solicitudes=solicitudes)
+
+
+@app.route("/perfil/borrar_amigo/<string:friend>")
+def borrar_amigo(friend):
+    username = session["username"]
+    sql.borrar_amistad(username, friend)
+    return redirect(url_for("perfil"))
+
+@app.route("/perfil/añadir_amigo/<string:friend>")
+def añadir_amigo(friend):
+    username = session["username"]
+    password = session["password"]
+    data_management.crear_amistad(username, friend, password)
+    return redirect(url_for("perfil"))
+
+@app.route("/enviar_solicitud_amigo", methods=["POST"])
+def enviar_solicitud_amigo():
+    if "username" not in session:
+        flash("Por favor, inicia sesión para continuar", "danger")
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    password = session["password"]
+    friend_username = request.form["friend_username"]
+
+    status, message = data_management.crear_solicitud(username, friend_username, password)
+
+    if status == 0:
+        flash("Solicitud de amistad enviada exitosamente", "success")
+        app.logger.debug("Solicitud de amistad enviada exitosamente")
+    else:
+        flash(f"No se pudo enviar la solicitud: {message}", "danger")
+        app.logger.debug(f"No se pudo enviar la solicitud: {message}")
+
+    return redirect(url_for("perfil"))
+
+@app.route("/ver_perfil_amigo/<string:friend>", methods=["GET"])
+def ver_perfil_amigo(friend):
+    pass
 
 @app.route("/ver_respuestas/<string:name_test>")
 def ver_respuestas_usuario(name_test):
