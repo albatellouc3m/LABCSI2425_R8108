@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, render_template, request, redirect, flash, session, url_for
-from flask_session import Session
+#from flask_session import Session
 import data_management
 import sql
 
@@ -10,13 +10,18 @@ app.secret_key = os.urandom(24) # Secret key for Flask session
 # Configure server-side session
 app.config["SESSION_TYPE"] = "filesystem"  # Alternatively, use Redis for production
 app.config["SESSION_PERMANENT"] = False  # Set to True if you want permanent sessions
-Session(app)  # Use Flask-Session to store sessions server-side
-
-@app.route("/")
-def register():
-    return render_template("register.html")
+#Session(app)  # Use Flask-Session to store sessions server-side
 
 # TODO; Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
+@app.route("/")
+def home():
+    # Verifica si el usuario está en la sesión
+    username = session.get("username", None)  # Devuelve None si no está en la sesión
+
+    # Renderiza la página de inicio, pasando el nombre de usuario si está autenticado
+    return render_template("home.html", username=username)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -43,51 +48,61 @@ def login():
     return render_template("login.html")
 
 
-@app.route("/home")
-def home():
-    #data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
-    #lol.encriptar_posresults()
-    if "username" not in session:  # Verifica si el usuario está en la sesión
-        flash("Por favor, inicia sesión para continuar", "danger")
-        return redirect(url_for("login"))
 
-    # Si el usuario está autenticado
-    username = session["username"]
-    # Debuging
-    # salt = session["salt"]
-    # key = session["encryption_key"]
-    # print(f"stored key: {key}")
-    # user_system=data_management.encriptar_datos_clave_sistema(session["encryption_key"])
-    # print(f"length of user key encripted with system: {len(user_system)} {type(user_system)} | {user_system}")# \n Encoded: {len(base64.b64encode(user_system).decode('utf-8'))} | {base64.b64encode(user_system).decode('utf-8')}")
-    # user_user = data_management.encriptar_datos_con_clave_derivada(key, key, salt)
-    # print(f"length of user key encripted with user key: {len(user_user)} {type(user_user)} | {user_user}")#  \n Encoded: {len(base64.b64encode(user_user).decode('utf-8'))} | {base64.b64encode(user_user).decode('utf-8')}")
-    return render_template("home.html", username=username)
-
-
-@app.route("/register", methods=["POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register_user():
-    username = request.form['username']
-    password = request.form['password']
-    name = request.form['name']
-    surname1 = request.form['surname1']
-    surname2 = request.form['surname2']
-    email = request.form['email']
+    if request.method == "POST":
+        # Procesar el formulario de registro
+        username = request.form['username']
+        password = request.form['password']
+        name = request.form['name']
+        surname1 = request.form['surname1']
+        surname2 = request.form['surname2']
+        email = request.form['email']
 
-    salt = os.urandom(16)
-    print(f"Salt upon register: {salt}")
+        salt = os.urandom(16)
+        print(f"Salt upon register: {salt}")
 
-    # Llamar a la función registrar_usuario de data_management.py
-    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
+        # Llamar a la función registrar_usuario de data_management.py
+        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
 
-    if status == 0:
-        flash("Registro exitoso", "success")
-        app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
-        return redirect("/login")
+        if status == 0:
+            flash("Registro exitoso", "success")
+            app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
+            return redirect("/login")
+        else:
+            app.logger.debug(f"Registro fallido {message}")
+            flash(message, "danger")
+            return redirect("/")
     else:
-        app.logger.debug(f"Registro fallido {message}")
-        flash(message, "danger")
-        return redirect("/")
+        # Mostrar el formulario de registro
+        return render_template("register.html")
 
+"""@app.route("/register", methods=["POST", "GET"])
+def register_user():
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+        name = request.form['name']
+        surname1 = request.form['surname1']
+        surname2 = request.form['surname2']
+        email = request.form['email']
+
+        salt = os.urandom(16)
+        print(f"Salt upon register: {salt}")
+
+        # Llamar a la función registrar_usuario de data_management.py
+        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
+
+        if status == 0:
+            flash("Registro exitoso", "success")
+            app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
+            return redirect("/login")
+        else:
+            app.logger.debug(f"Registro fallido {message}")
+            flash(message, "danger")
+            return redirect("/")
+"""
 
 @app.route("/test/<string:name_test>")
 def mostrar_test(name_test):
@@ -133,7 +148,7 @@ def guardar_respuestas():
     else:
         flash(message, "danger")
         app.logger.debug(f"Fallo al guardar respuestas: {message}")
-        return redirect("/home")
+        return redirect("/")
 
 """# Ruta opcional para ver las respuestas del usuario a un test
 @app.route("/ver_respuestas/<string:name_test>")
@@ -167,18 +182,18 @@ def perfil():
     resultados = data_management.obtener_resultados_usuario(username, key)
     if isinstance(resultados, str):
         app.logger.debug(resultados)
-        return redirect("/home")
+        return redirect("/")
 
     amigos = sql.ver_amigos([username])
     if isinstance(amigos, str):
         app.logger.debug(amigos)
-        return redirect("/home")
+        return redirect("/")
 
     solicitudes = sql.ver_solicitudes([username])
 
     if isinstance(amigos, str):
         app.logger.debug(amigos)
-        return redirect("/home")
+        return redirect("/")
 
     return render_template("ver_perfil.html", username=username, resultados=resultados, amigos=amigos, solicitudes=solicitudes)
 
@@ -231,7 +246,7 @@ def ver_perfil_amigo(friend):
     resultados_amigo = data_management.obtener_resultados_usuario(friend, key_amigo_desencriptada)
     if isinstance(resultados_amigo, str):
         app.logger.debug(resultados_amigo)
-        return redirect("/home")
+        return redirect("/")
     # print(f"{friend},{resultados_amigo}, {contraseña_amigo_desencriptada}")
     return render_template("ver_resultados_amigo.html", username=friend, resultados=resultados_amigo, contraseña_amigo=key_amigo_desencriptada)
 

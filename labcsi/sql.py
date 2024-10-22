@@ -198,6 +198,6 @@ def coger_key_amigo(usuario, amigo):
 
 
 def obtener_salt_usuario(username):
-    cursor.execute("SELECT salt FROM users WHERE username = %s", (username,))
+    cursor.execute("SELECT salt FROM Users WHERE username = %s", (username,))
     result = cursor.fetchone()
     return result[0]
