@@ -1,8 +1,16 @@
+import os
+
 from flask import Flask, render_template, request, redirect, flash, session, url_for
+from flask_session import Session
 import data_management
 import sql
+
 app = Flask(__name__)
-app.secret_key = "caca"
+app.secret_key = os.urandom(24) # Secret key for Flask session
+# Configure server-side session
+app.config["SESSION_TYPE"] = "filesystem"  # Alternatively, use Redis for production
+app.config["SESSION_PERMANENT"] = False  # Set to True if you want permanent sessions
+Session(app)  # Use Flask-Session to store sessions server-side
 
 @app.route("/")
 def register():
@@ -15,13 +23,16 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # Supongamos que tienes una función en `data_management.py` que autentifica al usuario
-        from data_management import autentificar_usuario
-
-        status, message = autentificar_usuario(username, password)
+        status, message = data_management.autentificar_usuario(username, password)
         if status == 0:  # Si la autenticación fue exitosa
-            session["username"] = username  # Almacenar el nombre de usuario en la sesión
-            session["password"] = data_management.encriptar_datos_registro(password)
+            session["username"] = username
+            salt = sql.obtener_salt_usuario(username)
+            session["salt"] = salt
+            print(f"Slat upon login: {salt}")
+            encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
+            session["encryption_key"] = encryption_key
+            print(f"key upon login: {encryption_key}")
+
             app.logger.debug("Inicio de sesión exitoso")
             flash("Inicio de sesión exitoso", "success")
             return redirect(url_for("home"))  # Redirigir a la página de inicio
@@ -42,6 +53,14 @@ def home():
 
     # Si el usuario está autenticado
     username = session["username"]
+    # Debuging
+    # salt = session["salt"]
+    # key = session["encryption_key"]
+    # print(f"stored key: {key}")
+    # user_system=data_management.encriptar_datos_clave_sistema(session["encryption_key"])
+    # print(f"length of user key encripted with system: {len(user_system)} {type(user_system)} | {user_system}")# \n Encoded: {len(base64.b64encode(user_system).decode('utf-8'))} | {base64.b64encode(user_system).decode('utf-8')}")
+    # user_user = data_management.encriptar_datos_con_clave_derivada(key, key, salt)
+    # print(f"length of user key encripted with user key: {len(user_user)} {type(user_user)} | {user_user}")#  \n Encoded: {len(base64.b64encode(user_user).decode('utf-8'))} | {base64.b64encode(user_user).decode('utf-8')}")
     return render_template("home.html", username=username)
 
 
@@ -54,8 +73,11 @@ def register_user():
     surname2 = request.form['surname2']
     email = request.form['email']
 
+    salt = os.urandom(16)
+    print(f"Salt upon register: {salt}")
+
     # Llamar a la función registrar_usuario de data_management.py
-    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
+    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
 
     if status == 0:
         flash("Registro exitoso", "success")
@@ -90,7 +112,7 @@ def mostrar_test(name_test):
 # Ruta para guardar las respuestas del usuario
 @app.route("/guardar_respuestas", methods=["POST"])
 def guardar_respuestas():
-    username = session.get('username')  # Recuperar el usuario autenticado de la sesión
+    username = session["username"]  # Recuperar el usuario autenticado de la sesión
     if not username:
         flash("Usuario no autenticado", "danger")
         return redirect("/login")
@@ -100,8 +122,9 @@ def guardar_respuestas():
     respuestas = request.form.getlist('respuestas[]')
 
     # Llamar a la función en data_management.py que guarda las respuestas y calcula el resultado
-    password = data_management.desencriptar_datos_registro(session["password"])
-    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, password)
+    key = session["encryption_key"]
+    salt = session["salt"]
+    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key, salt)
 
     if status == 0:
         flash(message, "Success")
@@ -139,8 +162,9 @@ def perfil():
         return redirect(url_for("login"))
 
     username = session["username"]
-    password = data_management.desencriptar_datos_registro(session["password"])
-    resultados = data_management.obtener_resultados_usuario(username, password)
+    key = session["encryption_key"]
+    print(f"key in profile: {key}")
+    resultados = data_management.obtener_resultados_usuario(username, key)
     if isinstance(resultados, str):
         app.logger.debug(resultados)
         return redirect("/home")
@@ -159,20 +183,6 @@ def perfil():
     return render_template("ver_perfil.html", username=username, resultados=resultados, amigos=amigos, solicitudes=solicitudes)
 
 
-@app.route("/perfil/borrar_amigo/<string:friend>")
-def borrar_amigo(friend):
-    username = session["username"]
-    sql.borrar_amistad(username, friend)
-    return redirect(url_for("perfil"))
-
-@app.route("/perfil/añadir_amigo/<string:friend>")
-def añadir_amigo(friend):
-    username = session["username"]
-    password = session["password"]
-    password = data_management.desencriptar_datos_registro(password)
-    data_management.crear_amistad(username, friend, password)
-    return redirect(url_for("perfil"))
-
 @app.route("/enviar_solicitud_amigo", methods=["POST"])
 def enviar_solicitud_amigo():
     if "username" not in session:
@@ -180,10 +190,11 @@ def enviar_solicitud_amigo():
         return redirect(url_for("login"))
 
     username = session["username"]
-    password_encriptada = session["password"]
+    key = session["encryption_key"]
+    key_encriptada = data_management.encriptar_datos_clave_sistema(key)
     friend_username = request.form["friend_username"]
 
-    status, message = data_management.crear_solicitud(username, friend_username, password_encriptada)
+    status, message = data_management.crear_solicitud(username, friend_username, key_encriptada)
 
     if status == 0:
         flash("Solicitud de amistad enviada exitosamente", "success")
@@ -194,30 +205,36 @@ def enviar_solicitud_amigo():
 
     return redirect(url_for("perfil"))
 
+
+@app.route("/perfil/añadir_amigo/<string:friend>")
+def añadir_amigo(friend):
+    username = session["username"]
+    key = session["encryption_key"]
+    salt = session["salt"]
+    data_management.crear_amistad(username, friend, key, salt)
+    return redirect(url_for("perfil"))
+
+@app.route("/perfil/borrar_amigo/<string:friend>")
+def borrar_amigo(friend):
+    username = session["username"]
+    sql.borrar_amistad(username, friend)
+    return redirect(url_for("perfil"))
+
+
 @app.route("/ver_perfil_amigo/<string:friend>", methods=["GET"])
 def ver_perfil_amigo(friend):
     username = session["username"]
-    password = data_management.desencriptar_datos_registro(session["password"])
+    key = session["encryption_key"]
 
-    contraseña_amigo_encryptada = sql.coger_contraseña_amigo(username, friend)
-    print(contraseña_amigo_encryptada)
-    contraseña_amigo_desencriptada = data_management.desencriptar_datos_con_clave_derivada(contraseña_amigo_encryptada, password)
-    resultados_amigo = data_management.obtener_resultados_usuario(friend, contraseña_amigo_desencriptada)
+    key_amigo_encriptada = sql.coger_key_amigo(username, friend)
+    key_amigo_desencriptada = data_management.desencriptar_datos_con_clave_derivada(key_amigo_encriptada, key, True)
+    resultados_amigo = data_management.obtener_resultados_usuario(friend, key_amigo_desencriptada)
     if isinstance(resultados_amigo, str):
         app.logger.debug(resultados_amigo)
         return redirect("/home")
-    print(f"{friend},{resultados_amigo}, {contraseña_amigo_desencriptada}")
-    return render_template("ver_resultados_amigo.html", username=friend, resultados=resultados_amigo, contraseña_amigo=contraseña_amigo_desencriptada)
+    # print(f"{friend},{resultados_amigo}, {contraseña_amigo_desencriptada}")
+    return render_template("ver_resultados_amigo.html", username=friend, resultados=resultados_amigo, contraseña_amigo=key_amigo_desencriptada)
 
-
-# @app.route("/ver_respuestas_amigo/<string:nombre>/<string:name_test>/<string:contraseña_amigo>", methods=["GET"])
-# def ver_respuestas_amigo(nombre, name_test, contraseña_amigo):
-#     respuestas = data_management.obtener_respuestas_usuario(nombre, name_test, contraseña_amigo)
-#     if isinstance(respuestas, str):
-#         app.logger.debug(respuestas)
-#         return redirect("/perfil")
-#
-#     return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
 @app.route("/ver_respuestas/<string:name_test>")
 def ver_respuestas_usuario(name_test):
@@ -226,8 +243,8 @@ def ver_respuestas_usuario(name_test):
         return redirect(url_for("login"))
 
     username = session["username"]  # Usamos el nombre de usuario de la sesión, en lugar de request.form
-    password = data_management.desencriptar_datos_registro(session["password"])
-    respuestas = data_management.obtener_respuestas_usuario(username, name_test, password)
+    key = session["encryption_key"]
+    respuestas = data_management.obtener_respuestas_usuario(username, name_test, key)
     if isinstance(respuestas, str):
         app.logger.debug(respuestas)
         return redirect("/perfil")
