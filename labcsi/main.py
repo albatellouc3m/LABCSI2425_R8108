@@ -4,11 +4,17 @@ import sql
 app = Flask(__name__)
 app.secret_key = "caca"
 
-@app.route("/")
-def register():
-    return render_template("register.html")
-
 # TODO; Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
+@app.route("/")
+def home():
+    # Verifica si el usuario está en la sesión
+    username = session.get("username", None)  # Devuelve None si no está en la sesión
+
+    # Renderiza la página de inicio, pasando el nombre de usuario si está autenticado
+    return render_template("home.html", username=username)
+
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -32,39 +38,31 @@ def login():
     return render_template("login.html")
 
 
-@app.route("/home")
-def home():
-    #data_management.generar_clave()  # Solo debes llamarla UNA VEZ para generar la clave
-    #lol.encriptar_posresults()
-    if "username" not in session:  # Verifica si el usuario está en la sesión
-        flash("Por favor, inicia sesión para continuar", "danger")
-        return redirect(url_for("login"))
-
-    # Si el usuario está autenticado
-    username = session["username"]
-    return render_template("home.html", username=username)
-
-
-@app.route("/register", methods=["POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register_user():
-    username = request.form['username']
-    password = request.form['password']
-    name = request.form['name']
-    surname1 = request.form['surname1']
-    surname2 = request.form['surname2']
-    email = request.form['email']
+    if request.method == "POST":
+        # Procesar el formulario de registro
+        username = request.form['username']
+        password = request.form['password']
+        name = request.form['name']
+        surname1 = request.form['surname1']
+        surname2 = request.form['surname2']
+        email = request.form['email']
 
-    # Llamar a la función registrar_usuario de data_management.py
-    status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
+        # Llamar a la función registrar_usuario de data_management.py
+        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email)
 
-    if status == 0:
-        flash("Registro exitoso", "success")
-        app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
-        return redirect("/login")
+        if status == 0:
+            flash("Registro exitoso", "success")
+            app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
+            return redirect("/login")
+        else:
+            app.logger.debug(f"Registro fallido {message}")
+            flash(message, "danger")
+            return redirect("/register")
     else:
-        app.logger.debug(f"Registro fallido {message}")
-        flash(message, "danger")
-        return redirect("/")
+        # Mostrar el formulario de registro
+        return render_template("register.html")
 
 
 @app.route("/test/<string:name_test>")
@@ -112,24 +110,11 @@ def guardar_respuestas():
         app.logger.debug(f"Fallo al guardar respuestas: {message}")
         return redirect("/home")
 
-"""# Ruta opcional para ver las respuestas del usuario a un test
-@app.route("/ver_respuestas/<string:name_test>")
-def ver_respuestas(name_test):
-    username = request.form['username']  # Asumimos que el usuario está autenticado
-    respuestas = data_management.obtener_respuestas(name_test, username)
-
-    if isinstance(respuestas, str):  # Si hubo un error
-        flash(respuestas, "danger")
-        return redirect("/")
-
-    return render_template("ver_respuestas.html", respuestas=respuestas)"""
-
-
 @app.route("/logout")
 def logout():
     session.pop("username", None)  # Eliminar el nombre de usuario de la sesión
     app.logger.debug("Has cerrado sesión exitosamente")
-    return redirect(url_for("login"))
+    return redirect(url_for("home"))
 
 
 @app.route("/perfil")

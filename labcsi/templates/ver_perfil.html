@@ -5,7 +5,42 @@
     <title>PERFIL</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style/ver_perfil.css') }}">
 </head>
-<body>
+<body id="body">
+
+    <header>
+        <div class="icon-menu">
+            <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil" id="btn_open">
+        </div>
+    </header>
+
+        <div class="menu__side" id="menu_side">
+            <div class="name__page">
+                <h4>AMIGOS</h4>
+            </div>
+            <div class="options__menu">
+                <div class="option">
+                    <img src="{{ url_for('static', filename='images/amigos.svg') }}" alt="perfil" class="icono">
+                    <h3>TODOS TUS AMIGOS/AS</h3>
+                    <div class="amigos-lista">
+                        <!-- aqui se generaran todos tus amigos -->
+                    </div>
+                </div>
+
+                <div class="option">
+                    <img src="{{ url_for('static', filename='images/solicitar.svg') }}" alt="solicitar" class="icono">
+                    <h3>ENVIA UNA SOLICITUD</h3>
+                </div>
+
+                <div class="option">
+                    <img src="{{ url_for('static', filename='images/solicitudes.svg') }}" alt="solicitudes" class="icono">
+                    <h3>SOLICITUDES PENDIENTES</h3>
+                </div>
+
+            </div>
+        </div>
+    <script src="{{ url_for('static', filename='script/perfil.js') }}"></script>
+
+
     <h1>Perfil de {{ username }}</h1>
 
     <div class="resultados">

@@ -5,10 +5,63 @@ body{
     padding:0;
 }
 
-h2{
-    margin-bottom: 0;
+/*fuentes*/
+@font-face {
+    font-family: 'Spiny Lobster';
+    src: url('/static/fonts/SpinyLobster.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
 }
 
+@font-face {
+    font-family: 'Cookies';
+    src: url('/static/fonts/CookiesMagis.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coolvetica';
+    src: url('/static/fonts/coolvetica.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Care around';
+    src: url('/static/fonts/CareAround.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+h1{
+    font-family: 'Spiny Lobster', Verdana;
+    display: flex;
+    justify-content: center;
+    font-size: 7vh;
+    margin: 8vh 0 5vh 0;
+}
+
+h2{
+    margin-bottom: 0;
+    display: flex;
+    font-family: 'Care Around', Verdana;
+    font-size: 5vh;
+    font-weight: bold;
+    color: #7192A5;
+}
+
+h3{
+    font-family: 'Cookies', Verdana;
+    font-size: 3vh;
+}
+
+h4 {
+    font-family: 'Cookies', Verdana;
+    font-size: 3vh;
+    display: flex;
+    justify-content: center;
+}
 /*NAVEGADOR*/
 /*barra de Navegación*/
 nav {
@@ -21,7 +74,7 @@ nav {
     padding: 0;
     width: auto;
     height: auto;
-    background-color: #96C2DB;
+    background-color: #BED8E6;
     display: flex;
     justify-content: flex-end; /* para la derecha*/
     align-items: center;
@@ -61,6 +114,53 @@ nav {
 
 }
 
+/*botones de inicio de sesion y registro*/
+.main-menu_item button {
+    color: white;
+    padding: 1vw 2vw;
+    border-radius: 10vw;
+    height: 5vh; /* igual que los enlaces */
+    background-color: #96C2DB;
+    transition: all 0.3s ease; /*transicion guapisima para que se hagan mas grandes las letras*/
+    display: flex; /* flexbox para centrar el contenido */
+    align-items: center; /* centra verticalmente */
+    justify-content: center; /* centra horizontalmente */
+}
+
+.main-menu_item button:hover{
+    text-decoration: none; /*para que a los botones no les salga el underline*/
+    background-color: #7192A5;
+}
+
+
+/* Dropdown */
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #BED8E6;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    width: 150px;
+    border-radius: 4px;
+
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 1vw;
+    text-decoration: none;
+    color: black;
+    text-align: left;
+    transition: all 1s ease;
+}
+
+.dropdown-content a:hover {
+    text-decoration: underline;
+    transform: scale(1);
+}
+
+
 .imagen-perfil{
     width: 3vw;
 }
@@ -90,11 +190,12 @@ nav {
 }
 
 .click{
+    font-family: 'Cookies', Verdana;
     text-decoration: none;
     font-size: 1vw;
     color: white;
     background-color: #96C2DB;
-    border-radius: 25px;
+    border-radius: 20vw;
     margin-top: 3vh;
     margin-bottom: 3vh;
     padding: 2% 5%;
@@ -103,4 +204,8 @@ nav {
     align-items: center;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 1s ease;
+}
+
+.click:hover{
+    background-color: #7192A5;
 }

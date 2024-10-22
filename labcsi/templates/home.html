@@ -12,14 +12,35 @@
 <body>
     <nav>
         <ul class="main-menu">
-            <li class="main-menu_item"><a href="/logout" class="main-menu_link">Cerrar sesión</a></li>
-            <li class="main-menu_item"><a href="/amigos" class="main-menu_link">Amigos</a></li>
-            <li class="main-menu_item"><a href="/perfil" class="main-menu_link">Mi Perfil</a></li>
-            <li class="main-menu_item"><img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil"></li>
+            {% if username %}
+                <li class="main-menu_item" id="perfil-img">
+                    <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil" onclick="toggleDropdown(event)">
+                    <div id="dropdown-menu" class="dropdown-content" style="display: none;">
+                        <a href="/perfil" class="main-menu_link">MI PERFIL</a>
+                        <a href="/logout" class="main-menu_link">CERRAR SESIÓN</a>
+                    </div>
+                </li>
+            {% else %}
+                <li class="main-menu_item" id="login-button">
+                    <button class="main-menu_link" onclick="window.location.href='/login'">INICIA SESIÓN</button>
+                </li>
+                <li class="main-menu_item" id="register-button">
+                    <button class="main-menu_link" onclick="window.location.href='/register'">REGÍSTRATE</button>
+                </li>
+            {% endif %}
         </ul>
     </nav>
+    <script src="{{ url_for('static', filename='script/nav.js') }}"></script>
 
-    <h1>Bienvenido, {{ username }}</h1>
+    <div>
+        {% if username %}
+            <h1>BIENVENIDA, {{ username }}</h1>
+            <!-- Contenido específico para usuarios autenticados -->
+        {% else %}
+            <h1>BIENVENIDA A NUESTRA WEB DE TESTS</h1>
+            <h4>Por favor, inicia sesión o regístrate para acceder a todas las funcionalidades.</h4>
+        {% endif %}
+    </div>
 
     <div class="todos-test">
         <div class="test">
