@@ -24,13 +24,13 @@ def comprobar_existencia_usuario(username):
 
 
 # Función para insertar un usuario en la base de datos
-def insertar_usuario(username, password, email, name, surname1, surname2):
+def insertar_usuario(username, password, email, name, surname1, surname2, salt):
     sql = """
-        INSERT INTO Users (username, password, email, name, surname1, surname2, reg_date)
-        VALUES (%s, %s, %s, %s, %s, %s, CURDATE())
+        INSERT INTO Users (username, password, email, name, surname1, surname2, salt, reg_date)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, CURDATE())
     """
 
-    values = (username, password, email, name, surname1, surname2)
+    values = (username, password, email, name, surname1, surname2, salt)
 
     try:
         cursor.execute(sql, values)  # Ejecutar la consulta con los valores
@@ -124,14 +124,14 @@ def ver_amigos(username):
         return f"fallo al ver amistades: {str(e)}"
 
 
-def grabar_amistad(username1, username2, pass_user1, pass_user2):
+def grabar_amistad(username1, username2, key_user1, key_user2):
     cursor.execute(
         "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
         (username1, username2, username2, username1)
     )
     cursor.execute(
-        "INSERT INTO friends (username1, username2, status, pass_user2) VALUES (%s, %s, 'aceptado', %s), (%s, %s, 'aceptado', %s);",
-        (username1, username2, pass_user2, username2, username1, pass_user1)
+        "INSERT INTO friends (username1, username2, status, key_user2) VALUES (%s, %s, 'aceptado', %s), (%s, %s, 'aceptado', %s);",
+        (username1, username2, key_user2, username2, username1, key_user1)
     )
     db.commit()
 
@@ -144,12 +144,12 @@ def borrar_amistad(username1, username2):
     db.commit()
 
 
-def enviar_solicitud(petidor, receptor, pass_petidor):
+def enviar_solicitud(petidor, receptor, key_petidor):
     try:
         # Insert a pending friend request
         cursor.execute(
-            "INSERT INTO friends (username1, username2, status, pass_user2) VALUES (%s, %s, 'solicitado', %s);",
-            (petidor, receptor, pass_petidor)
+            "INSERT INTO friends (username1, username2, status, key_user2) VALUES (%s, %s, 'solicitado', %s);",
+            (petidor, receptor, key_petidor)
         )
         db.commit()
         return (0, "Solicitud enviada")
@@ -170,24 +170,34 @@ def ver_solicitudes(username):
         return f"fallo al ver amistades: {str(e)}"
 
 
-def coger_contraseña_solicitante(solicitante, solicitado):
+def coger_key_solicitante(solicitante, solicitado):
     try:
         cursor.execute(
-            "SELECT pass_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'solicitado';",
+            "SELECT key_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'solicitado';",
             (solicitante, solicitado)
         )
         return cursor.fetchall()[0][0]
+        # key_string = cursor.fetchall()[0][0]
+        # print(key_string)
+        # key_binary = base64.b64decode(key_string + '=' * (-len(key_string) % 4))
+        # return key_binary
     except Exception as e:
         db.rollback()
         return f"fallo al ver amistades: {str(e)}"
 
-def coger_contraseña_amigo(usuario, amigo):
+def coger_key_amigo(usuario, amigo):
     try:
         cursor.execute(
-            "SELECT pass_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'aceptado';",
+            "SELECT key_user2 FROM friends WHERE username1 = %s AND username2 = %s AND status = 'aceptado';",
             (usuario, amigo)
         )
         return cursor.fetchone()[0]
     except Exception as e:
         db.rollback()
         return f"fallo al ver amistades: {str(e)}"
+
+
+def obtener_salt_usuario(username):
+    cursor.execute("SELECT salt FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+    return result[0]
