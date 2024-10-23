@@ -9,19 +9,97 @@
     <h1>Resultados de tu amigo {{ username }}</h1>
 
     <div class="resultados">
-        <h2>Resultados de Tests</h2>
         {% if resultados %}
             <ul>
                 {% for resultado in resultados %}
                     <li>
-                        <strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }} <br>
-                        <em>Descripción:</em> {{ resultado[2] }} <br>
-                        <em>Fecha:</em> {{ resultado[3] }} <br>
+                        <div class="resultado-container">
+                            <p><strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }}</p>
+                        </div>
+                        <div class="descripcion-container">
+                            <div class="imagen-resultado">
+                                {% if resultado[1] == 'Extrovertido/a y Líder natural' %}
+                                    <img src="{{ url_for('static', filename='images/extrovertido.svg') }}" alt="Extrovertido/a y Líder natural">
+                                {% elif resultado[1] == 'Colaborador/a empático/a' %}
+                                    <img src="{{ url_for('static', filename='images/colaborador.svg') }}" alt="Colaborador/a empático/a">
+                                {% elif resultado[1] == 'Equilibrado/a' %}
+                                    <img src="{{ url_for('static', filename='images/equilibrado.svg') }}" alt="Equilibrado/a">
+                                {% elif resultado[1] == 'Individualista y Organizado/a' %}
+                                    <img src="{{ url_for('static', filename='images/individualista.svg') }}" alt="Individualista y Organizado/a">
+                                {% elif resultado[1] == 'Introvertido/a y Reservado/a' %}
+                                    <img src="{{ url_for('static', filename='images/introvertido.svg') }}" alt="Introvertido/a y Reservado/a">
+
+                                {% elif resultado[1] == 'Gryffindor' %}
+                                    <img src="{{ url_for('static', filename='images/gryffindor.svg') }}" alt="Gryffindor">
+                                {% elif resultado[1] == 'Slytherin' %}
+                                    <img src="{{ url_for('static', filename='images/slytherin.svg') }}" alt="Slytherin">
+                                {% elif resultado[1] == 'Ravenclaw' %}
+                                    <img src="{{ url_for('static', filename='images/ravenclaw.svg') }}" alt="Ravenclaw">
+                                {% elif resultado[1] == 'Hufflepuff' %}
+                                    <img src="{{ url_for('static', filename='images/hufflepuff.svg') }}" alt="Hufflepuff">
+                                {% elif resultado[1] == 'Dobby el elfo doméstico' %}
+                                    <img src="{{ url_for('static', filename='images/dobby.svg') }}" alt="Dobby el elfo doméstico">
+
+                                {% elif resultado[1] == 'Pizza Hawaiana' %}
+                                    <img src="{{ url_for('static', filename='images/hawaiana.svg') }}" alt="Pizza Hawaiana">
+                                {% elif resultado[1] == 'Pizza Pepperoni' %}
+                                    <img src="{{ url_for('static', filename='images/pepperoni.svg') }}" alt="Pizza Pepperoni">
+                                {% elif resultado[1] == 'Pizza Cuatro Quesos' %}
+                                    <img src="{{ url_for('static', filename='images/cuatro_quesos.svg') }}" alt="Pizza Cuatro Quesos">
+                                {% elif resultado[1] == 'Pizza Margarita' %}
+                                    <img src="{{ url_for('static', filename='images/margarita.svg') }}" alt="Pizza Margarita">
+                                {% elif resultado[1] == 'Pizza Vegetariana' %}
+                                    <img src="{{ url_for('static', filename='images/vegetariana.svg') }}" alt="Pizza Vegetariana">
+
+                                {% elif resultado[1] == 'Eres una Lavadora' %}
+                                    <img src="{{ url_for('static', filename='images/lavadora.svg') }}" alt="Lavadora">
+                                {% elif resultado[1] == 'Eres un Frigorifico' %}
+                                    <img src="{{ url_for('static', filename='images/frigorifico.svg') }}" alt="Refrigerador">
+                                {% elif resultado[1] == 'Eres un Microondas' %}
+                                    <img src="{{ url_for('static', filename='images/microondas.svg') }}" alt="Microondas">
+                                {% elif resultado[1] == 'Eres una Aspiradora' %}
+                                    <img src="{{ url_for('static', filename='images/aspiradora.svg') }}" alt="Aspiradora">
+                                {% elif resultado[1] == 'Eres un Ventilador' %}
+                                    <img src="{{ url_for('static', filename='images/ventilador.svg') }}" alt="Ventilador">
+
+                                {% elif resultado[1] == 'Eres el Dedo Gordo' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_gordo.svg') }}" alt="Dedo Gordo">
+                                {% elif resultado[1] == 'Eres el Dedo Índice' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_indice.svg') }}" alt="Dedo Índice">
+                                {% elif resultado[1] == 'Eres el Dedo del Medio' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_medio.svg') }}" alt="Dedo del Medio">
+                                {% elif resultado[1] == 'Eres el Dedo Anular' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_anular.svg') }}" alt="Dedo Anular">
+                                {% elif resultado[1] == 'Eres el Dedo Pequeño' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_pequeno.svg') }}" alt="Dedo Pequeño">
+
+                                {% elif resultado[1] == 'Eres una Pizza de Pepperoni' %}
+                                    <img src="{{ url_for('static', filename='images/pepperoni.svg') }}" alt="Pizza de Pepperoni">
+                                {% elif resultado[1] == 'Eres un Tazón de Sopa Ramen' %}
+                                    <img src="{{ url_for('static', filename='images/ramen.svg') }}" alt="Sopa Ramen">
+                                {% elif resultado[1] == 'Eres una Ensalada de Frutas' %}
+                                    <img src="{{ url_for('static', filename='images/ensalada_frutas.svg') }}" alt="Ensalada de Frutas">
+                                {% elif resultado[1] == 'Eres un Sándwich de Mantequilla y Mermelada' %}
+                                    <img src="{{ url_for('static', filename='images/sandwich.svg') }}" alt="Sándwich de Mantequilla y Mermelada">
+                                {% elif resultado[1] == 'Eres un Pepinillo en Vinagre' %}
+                                    <img src="{{ url_for('static', filename='images/pepinillo.svg') }}" alt="Pepinillo en Vinagre">
+                                {% endif %}
+                            </div>
+                            <div class="des-fec">
+                                <p><b>DESCRIPCIÓN:</b> {{ resultado[2] }} </p>
+                                <p><b>FECHA:</b> {{ resultado[3] }} </p>
+                            </div>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Este usuario no tiene resultados aun</p>
+            <p>Este usuario no tiene ningún test hecho aún.</p>
         {% endif %}
+    </div>
+
+    <footer>
+        <a href="{{ url_for('perfil') }}" class="main-button">Volver a Mi Perfil</a>
+    </footer>
 </body>
 </html>

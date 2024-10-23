@@ -1,11 +1,42 @@
+@font-face {
+    font-family: 'Spiny Lobster';
+    src: url('/static/fonts/SpinyLobster.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Cookies';
+    src: url('/static/fonts/CookiesMagis.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coolvetica';
+    src: url('/static/fonts/coolvetica.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Care around';
+    src: url('/static/fonts/CareAround.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 
 h1{
     display: flex;
     justify-content: center;
     margin-top: 5vh;
+    font-family: 'Spiny Lobster', Verdana;
+    font-size: 7vh;
 }
 body {
-    font-family: Verdana;
+    font-family: 'Care around', Verdana;
+    font-size: 2.5vh;
     margin: 0;
     padding: 0;
     background-color: white;
@@ -44,6 +75,7 @@ input[type=text], input[type=password] {
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
+    margin-bottom: 2vh;
 }
 .row-full{
     display: flex;
@@ -59,13 +91,14 @@ input[type=text], input[type=password] {
 }
 /*boton de enviar*/
 input[type=submit] {
-    font-size: 1vw;
+    font-family: 'Cookies', Verdana;
+    font-size: 1.5vw;
     color: white;
     background-color: #96C2DB;
     border-radius: 25px;
     margin-top: 3vh;
     margin-bottom: 3vh;
-    padding: 2% 5%;
+    padding: 2% 4vw;
     display: flex;
     justify-content: center;
     align-items: center;

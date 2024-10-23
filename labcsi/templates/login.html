@@ -1,15 +1,15 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width",
-          initial-scale="1.0">
-    <title>TESTS</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/login.css') }}">
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}
+    Iniciar Sesión
+{% endblock %}
+
+{% block extra_css %}
+    <!-- Estilos específicos para la página de login -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/login.css') }}">
+{% endblock %}
+
+{% block content %}
     <div class="login">
         <img src="{{ url_for('static', filename='images/quizzLog.svg') }}" alt="quizzLog" class="imagen-Log">
 
@@ -26,9 +26,8 @@
             </div>
             <div class="row-full">
                 <input type="submit" value="Login" class="Login">
-                   <a href="/" class="cuenta">no tienes cuenta?</a>
+                   <a href="/register" class="cuenta">no tienes cuenta?</a>
             </div>
         </form>
     </div>
-</body>
-</html>
+{% endblock %}

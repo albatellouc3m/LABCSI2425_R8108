@@ -1,0 +1,97 @@
+body {
+    background-color: #f0f8ff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-family: 'Spiny Lobster', Verdana;
+    font-size: 7vh;
+    margin: 5vh 0;
+    text-align: center;
+}
+
+@font-face {
+    font-family: 'Spiny Lobster';
+    src: url('/static/fonts/SpinyLobster.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Cookies';
+    src: url('/static/fonts/CookiesMagis.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coolvetica';
+    src: url('/static/fonts/coolvetica.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Care around';
+    src: url('/static/fonts/CareAround.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.respuestas{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+.respuestas ul {
+    padding: 0;
+    list-style: none;
+    width: 80%;
+
+}
+
+.respuestas li {
+    background-color: white;
+    margin: 5vh 0;
+    padding: 2vh;
+    border-radius: 20px;
+    border: 2px solid #BED8E6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+strong{
+    font-size: 3vh;
+    font-family: 'Cookies', Verdana;
+    color: #7192A5;
+}
+.pregunta-container, .respuesta-container {
+    margin: 1vh 0;
+    font-size: 3vh;
+}
+
+footer {
+    margin: 5vh 0;
+}
+
+.main-button {
+    font-family: 'Cookies', Verdana;
+    color: white;
+    background-color: #96C2DB;
+    padding: 1vh 3vw;
+    border: none;
+    cursor: pointer;
+    border-radius: 20vw;
+    font-size: 3vh;
+    text-align: center;
+    text-decoration: none;
+}
+
+.main-button:hover {
+    background-color: #7192A5;
+}

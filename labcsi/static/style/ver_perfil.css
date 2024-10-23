@@ -5,7 +5,9 @@ body{
     padding:0;
     transition: all 300ms cubic-bezier(0.785, 0.135, 0.15, 0.86);
 }
-
+a{
+    text-decoration: none;
+}
 
 @font-face {
     font-family: 'Spiny Lobster';
@@ -39,7 +41,12 @@ header {
     margin: 0;
     position: sticky; /*posicion para que solo se quede la barra en la primera página*/
     top: 0;
+    left: 0;
     z-index: 200;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: #BED8E6;
 }
 
 .icon-menu {
@@ -57,6 +64,23 @@ header {
     transform: translateX(10px); /*esto es para que el menu de antes no se vea jeje*/
     cursor: pointer;
     transition: all 0.3s ease; /*transicion para que se vea guay*/
+}
+
+.icon-menu-perfil{
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: center;
+}
+
+.icon-menu-perfil img{
+    margin-right: 2vw;
+
+}
+
+.icon-menu-perfil h1{
+    font-size: 3vh;
+    font-family: 'Cookies', Verdana;
 }
 
 .menu__side{
@@ -81,9 +105,10 @@ header {
 
 .options__menu{
     padding: 2vh 3vw;
-    position: absolute;
+    position: relative;
     top: 80px;
     cursor: default;
+    height: calc(100% - 80px); /* Asegura que ocupe toda la altura disponible, excepto el espacio superior */
 }
 
 .option{
@@ -93,6 +118,7 @@ header {
     transition: all 1s ease;
 }
 
+
 .option h3{
     font-family: 'Cookies', Verdana;
 }
@@ -101,12 +127,18 @@ header {
 }
 
 .imagen-perfil{
+    display: flex;
+    align-items: center;
+    width: 3vw;
+}
+
+.menu-hamb{
     margin: 0.5vw 0;
     float: left;
     display: flex;
     padding: 10px 20px;
     align-items: center;
-    width: 3vw;
+    width: 2vw;
 }
 
 .icono{
@@ -130,4 +162,275 @@ h1{
 
 .menu__side_move{
     width: 30vw;
+}
+
+.volver-btn {
+    position: absolute;
+    bottom: 100px;
+    right: 20px;
+    display: none; /* Ocultamos el botón inicialmente */
+    transition: all 1s;
+}
+
+.volverbtn {
+    font-family: 'Cookies', Verdana;
+    background-color: #96C2DB;
+    padding: 1vh 3vw;
+    border-radius: 20vw;
+    text-decoration: none;
+    color: white;
+    font-size: 2vh;
+    text-align: center;
+    display: block;
+}
+
+.volverbtn:hover {
+    background-color: #7192A5;
+}
+/* Estilo para los Popups */
+.modal-content {
+    position: relative; /* El contenido del popup es relativo para poder posicionar el botón de cerrar */
+    background-image: url(../images/inicio-registro.svg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #fefefe;
+    margin: 5% auto 15% auto;
+    border: 1px solid #888;
+    width: 30%;
+    padding: 5vh;
+}
+
+.animate {
+    -webkit-animation: animatezoom 0.6s;
+    animation: animatezoom 0.6s;
+}
+
+@-webkit-keyframes animatezoom {
+    from {-webkit-transform: scale(0)}
+    to {-webkit-transform: scale(1)}
+}
+
+@keyframes animatezoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+}
+
+/* Background overlay for popups */
+.login-popup {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 200; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    padding-top: 60px;
+}
+
+/* Botones de acción en los popups */
+.otherbtn {
+    position: absolute;
+    top: 10px;
+    left: 10px; /* Mueve el botón a la esquina izquierda */
+}
+
+.closebtn {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+button{
+    background-color: transparent;
+    border: none;
+}
+
+
+.container {
+    padding: 20px;
+}
+
+.button-container {
+    text-align: center;
+}
+
+.main-button {
+    font-family: 'Cookies', Verdana;
+    color: white;
+    background-color: #96C2DB;
+    padding: 1vh 3vw;
+    border: none;
+    cursor: pointer;
+    border-radius: 20vw;
+    font-size: 3vh;
+    margin-bottom: 5vh;
+}
+
+.main-button a{
+    color: white;
+}
+
+.main-button:hover {
+    background-color: #7192A5;
+}
+
+h4{
+    font-family: 'Cookies', Verdana;
+    display: flex;
+    justify-content: center;
+    font-size: 5vh;
+}
+
+.amigos-lista{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: 3vw;
+}
+
+.amigos-lista li{
+    background-color: white;
+    padding: 2vh;
+    margin: 0 0 2vh 2vw;
+    border-radius: 20px;
+    list-style: none;
+    display: flex;
+    width: 15vw;
+    justify-content: space-between;
+    align-items: center;
+    }
+
+
+.cerrarbtn{
+    width: 2vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.amigo-perfil{
+    color: black;
+}
+
+input[type=text] {
+    width: 100%;
+    padding: 2vh;
+    margin: 1vh 0 3vh 0;
+    display: inline-block;
+    border: 1px solid #bfd9d1;
+    box-sizing: border-box;
+  }
+
+.resultados ul{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.resultados li{
+    background-color: white;
+    margin: 5vh 0;
+    padding: 2vh;
+    list-style: none;
+    border-radius: 20px;
+    border-style: solid;
+    border-width: 30px;
+    border-color: #BED8E6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    width: 60%;
+
+}
+
+.resultado-container{
+    display: flex;
+    justify-content: center;
+    font-family: 'Care around', Verdana;
+    font-size: 4vh;
+}
+
+.descripcion-container{
+    font-family: Verdana;
+    font-size: 2vh;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+b{
+    font-family: 'Spiny Lobster', Verdana;
+
+}
+
+.descripcion-container img{
+    width: 10vw;
+    padding: 2vh;
+}
+
+.des-fec{
+    margin: 0 3vw;
+     text-align: justify;
+}
+
+.ver-respuestas-container{
+    display: flex;
+    justify-content: center;
+}
+
+.container-solicitudes{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+ul{
+    padding-left:0;
+}
+
+#lista-solicitudes{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items:center;
+}
+
+#lista-solicitudes li{
+    padding: 3vh;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 80%;
+    border-color: #96C2DB;
+    border-style: solid;
+    border-width: 0.5vh;
+    border-radius: 2vw;
+}
+
+
+footer {
+    margin: 5vh 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-button {
+    font-family: 'Cookies', Verdana;
+    color: white;
+    background-color: #96C2DB;
+    padding: 1vh 3vw;
+    border: none;
+    cursor: pointer;
+    border-radius: 20vw;
+    font-size: 3vh;
+    text-align: center;
+    text-decoration: none;
+}
+
+.main-button:hover {
+    background-color: #7192A5;
 }

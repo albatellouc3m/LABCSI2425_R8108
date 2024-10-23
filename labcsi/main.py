@@ -78,31 +78,6 @@ def register_user():
         # Mostrar el formulario de registro
         return render_template("register.html")
 
-"""@app.route("/register", methods=["POST", "GET"])
-def register_user():
-    if request.method == "POST":
-        username = request.form['username']
-        password = request.form['password']
-        name = request.form['name']
-        surname1 = request.form['surname1']
-        surname2 = request.form['surname2']
-        email = request.form['email']
-
-        salt = os.urandom(16)
-        print(f"Salt upon register: {salt}")
-
-        # Llamar a la función registrar_usuario de data_management.py
-        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
-
-        if status == 0:
-            flash("Registro exitoso", "success")
-            app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
-            return redirect("/login")
-        else:
-            app.logger.debug(f"Registro fallido {message}")
-            flash(message, "danger")
-            return redirect("/")
-"""
 
 @app.route("/test/<string:name_test>")
 def mostrar_test(name_test):
@@ -150,24 +125,11 @@ def guardar_respuestas():
         app.logger.debug(f"Fallo al guardar respuestas: {message}")
         return redirect("/")
 
-"""# Ruta opcional para ver las respuestas del usuario a un test
-@app.route("/ver_respuestas/<string:name_test>")
-def ver_respuestas(name_test):
-    username = request.form['username']  # Asumimos que el usuario está autenticado
-    respuestas = data_management.obtener_respuestas(name_test, username)
-
-    if isinstance(respuestas, str):  # Si hubo un error
-        flash(respuestas, "danger")
-        return redirect("/")
-
-    return render_template("ver_respuestas.html", respuestas=respuestas)"""
-
-
 @app.route("/logout")
 def logout():
     session.pop("username", None)  # Eliminar el nombre de usuario de la sesión
     app.logger.debug("Has cerrado sesión exitosamente")
-    return redirect(url_for("login"))
+    return redirect(url_for("home"))
 
 
 @app.route("/perfil")

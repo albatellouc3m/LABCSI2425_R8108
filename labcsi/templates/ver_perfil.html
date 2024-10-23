@@ -4,55 +4,142 @@
     <meta charset="UTF-8">
     <title>PERFIL</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style/ver_perfil.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body id="body">
 
     <header>
         <div class="icon-menu">
-            <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil" id="btn_open">
+            <div class="icon-menu-perfil">
+                <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil">
+                <h1>PERFIL DE {{ username }}</h1>
+            </div>
+        </div>
+        <div class="icon-menu">
+            <img src="{{ url_for('static', filename='images/menu-hamburguesa.svg') }}" alt="perfil" class="menu-hamb" id="btn_open">
         </div>
     </header>
 
-        <div class="menu__side" id="menu_side">
-            <div class="name__page">
-                <h4>AMIGOS</h4>
-            </div>
-            <div class="options__menu">
+    <div class="menu__side" id="menu_side">
+        <div class="name__page">
+            <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil" style="display:none;">
+        </div>
+        <div class="options__menu">
+            <div class="names" id="mostrar_amigos">
                 <div class="option">
                     <img src="{{ url_for('static', filename='images/amigos.svg') }}" alt="perfil" class="icono">
                     <h3>TODOS TUS AMIGOS/AS</h3>
-                    <div class="amigos-lista">
-                        <!-- aqui se generaran todos tus amigos -->
-                    </div>
                 </div>
-
-                <div class="option">
-                    <img src="{{ url_for('static', filename='images/solicitar.svg') }}" alt="solicitar" class="icono">
-                    <h3>ENVIA UNA SOLICITUD</h3>
+                <div class="amigos-lista">
+                    <!-- Aquí se generarán todos tus amigos -->
                 </div>
+            </div>
 
-                <div class="option">
-                    <img src="{{ url_for('static', filename='images/solicitudes.svg') }}" alt="solicitudes" class="icono">
-                    <h3>SOLICITUDES PENDIENTES</h3>
+            <div class="option" id="enviar_solicitud">
+                <img src="{{ url_for('static', filename='images/solicitar.svg') }}" alt="solicitar" class="icono">
+                <h3>ENVIA UNA SOLICITUD</h3>
+            </div>
+
+            <div class="option" id="ver_solicitudes">
+                <img src="{{ url_for('static', filename='images/solicitudes.svg') }}" alt="solicitudes" class="icono">
+                <h3>SOLICITUDES PENDIENTES</h3>
+            </div>
+
+            <div class="option">
+                <div class="volver-btn">
+                    <a href="/" class="volverbtn">Volver Al Inicio</a>
                 </div>
-
             </div>
         </div>
-    <script src="{{ url_for('static', filename='script/perfil.js') }}"></script>
+    </div>
 
-
-    <h1>Perfil de {{ username }}</h1>
+    <h1>Resultados de los Tests de {{ username }}</h1>
 
     <div class="resultados">
-        <h2>Resultados de Tests</h2>
         {% if resultados %}
             <ul>
                 {% for resultado in resultados %}
                     <li>
-                        <strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }} <br>
-                        <em>Descripción:</em> {{ resultado[2] }} <br>
-                        <em>Fecha:</em> {{ resultado[3] }} <br>
-                        <a href="{{ url_for('ver_respuestas_usuario', name_test=resultado[0]) }}">Ver Respuestas</a>
+                        <div class="resultado-container">
+                            <p><strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }}</p>
+                        </div>
+                        <div class="descripcion-container">
+                            <div class="imagen-resultado">
+                                {% if resultado[1] == 'Extrovertido/a y Líder natural' %}
+                                    <img src="{{ url_for('static', filename='images/extrovertido.svg') }}" alt="Extrovertido/a y Líder natural">
+                                {% elif resultado[1] == 'Colaborador/a empático/a' %}
+                                    <img src="{{ url_for('static', filename='images/colaborador.svg') }}" alt="Colaborador/a empático/a">
+                                {% elif resultado[1] == 'Equilibrado/a' %}
+                                    <img src="{{ url_for('static', filename='images/equilibrado.svg') }}" alt="Equilibrado/a">
+                                {% elif resultado[1] == 'Individualista y Organizado/a' %}
+                                    <img src="{{ url_for('static', filename='images/individualista.svg') }}" alt="Individualista y Organizado/a">
+                                {% elif resultado[1] == 'Introvertido/a y Reservado/a' %}
+                                    <img src="{{ url_for('static', filename='images/introvertido.svg') }}" alt="Introvertido/a y Reservado/a">
+
+                                {% elif resultado[1] == 'Gryffindor' %}
+                                    <img src="{{ url_for('static', filename='images/gryffindor.svg') }}" alt="Gryffindor">
+                                {% elif resultado[1] == 'Slytherin' %}
+                                    <img src="{{ url_for('static', filename='images/slytherin.svg') }}" alt="Slytherin">
+                                {% elif resultado[1] == 'Ravenclaw' %}
+                                    <img src="{{ url_for('static', filename='images/ravenclaw.svg') }}" alt="Ravenclaw">
+                                {% elif resultado[1] == 'Hufflepuff' %}
+                                    <img src="{{ url_for('static', filename='images/hufflepuff.svg') }}" alt="Hufflepuff">
+                                {% elif resultado[1] == 'Dobby el elfo doméstico' %}
+                                    <img src="{{ url_for('static', filename='images/dobby.svg') }}" alt="Dobby el elfo doméstico">
+
+                                {% elif resultado[1] == 'Pizza Hawaiana' %}
+                                    <img src="{{ url_for('static', filename='images/hawaiana.svg') }}" alt="Pizza Hawaiana">
+                                {% elif resultado[1] == 'Pizza Pepperoni' %}
+                                    <img src="{{ url_for('static', filename='images/pepperoni.svg') }}" alt="Pizza Pepperoni">
+                                {% elif resultado[1] == 'Pizza Cuatro Quesos' %}
+                                    <img src="{{ url_for('static', filename='images/cuatro_quesos.svg') }}" alt="Pizza Cuatro Quesos">
+                                {% elif resultado[1] == 'Pizza Margarita' %}
+                                    <img src="{{ url_for('static', filename='images/margarita.svg') }}" alt="Pizza Margarita">
+                                {% elif resultado[1] == 'Pizza Vegetariana' %}
+                                    <img src="{{ url_for('static', filename='images/vegetariana.svg') }}" alt="Pizza Vegetariana">
+
+                                {% elif resultado[1] == 'Eres una Lavadora' %}
+                                    <img src="{{ url_for('static', filename='images/lavadora.svg') }}" alt="Lavadora">
+                                {% elif resultado[1] == 'Eres un Frigorifico' %}
+                                    <img src="{{ url_for('static', filename='images/frigorifico.svg') }}" alt="Refrigerador">
+                                {% elif resultado[1] == 'Eres un Microondas' %}
+                                    <img src="{{ url_for('static', filename='images/microondas.svg') }}" alt="Microondas">
+                                {% elif resultado[1] == 'Eres una Aspiradora' %}
+                                    <img src="{{ url_for('static', filename='images/aspiradora.svg') }}" alt="Aspiradora">
+                                {% elif resultado[1] == 'Eres un Ventilador' %}
+                                    <img src="{{ url_for('static', filename='images/ventilador.svg') }}" alt="Ventilador">
+
+                                {% elif resultado[1] == 'Eres el Dedo Gordo' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_gordo.svg') }}" alt="Dedo Gordo">
+                                {% elif resultado[1] == 'Eres el Dedo Índice' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_indice.svg') }}" alt="Dedo Índice">
+                                {% elif resultado[1] == 'Eres el Dedo del Medio' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_medio.svg') }}" alt="Dedo del Medio">
+                                {% elif resultado[1] == 'Eres el Dedo Anular' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_anular.svg') }}" alt="Dedo Anular">
+                                {% elif resultado[1] == 'Eres el Dedo Pequeño' %}
+                                    <img src="{{ url_for('static', filename='images/dedo_pequeno.svg') }}" alt="Dedo Pequeño">
+
+                                {% elif resultado[1] == 'Eres una Pizza de Pepperoni' %}
+                                    <img src="{{ url_for('static', filename='images/pepperoni.svg') }}" alt="Pizza de Pepperoni">
+                                {% elif resultado[1] == 'Eres un Tazón de Sopa Ramen' %}
+                                    <img src="{{ url_for('static', filename='images/ramen.svg') }}" alt="Sopa Ramen">
+                                {% elif resultado[1] == 'Eres una Ensalada de Frutas' %}
+                                    <img src="{{ url_for('static', filename='images/ensalada_frutas.svg') }}" alt="Ensalada de Frutas">
+                                {% elif resultado[1] == 'Eres un Sándwich de Mantequilla y Mermelada' %}
+                                    <img src="{{ url_for('static', filename='images/sandwich.svg') }}" alt="Sándwich de Mantequilla y Mermelada">
+                                {% elif resultado[1] == 'Eres un Pepinillo en Vinagre' %}
+                                    <img src="{{ url_for('static', filename='images/pepinillo.svg') }}" alt="Pepinillo en Vinagre">
+                                {% endif %}
+                            </div>
+                            <div class="des-fec">
+                                <p><b>DESCRIPCIÓN:</b> {{ resultado[2] }} </p>
+                                <p><b>FECHA:</b> {{ resultado[3] }} </p>
+                            </div>
+                        </div>
+                        <div class="ver-respuestas-container">
+                            <button class="main-button"><a href="{{ url_for('ver_respuestas_usuario', name_test=resultado[0]) }}">Ver Respuestas</a></button>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>
@@ -60,41 +147,58 @@
             <p>No has completado ningún test aún.</p>
         {% endif %}
     </div>
-    <div class="amigos">
-        <h2>Amigos</h2>
-        {% if amigos %}
-            <ul>
-                {% for amigo in amigos %}
-                    <li>
-                        <strong>{{ amigo[0] }}</strong><a href="{{ url_for('borrar_amigo', friend=amigo[0]) }}">Borrar Amistad</a><a href="{{ url_for('ver_perfil_amigo', friend=amigo[0]) }}"> | Ver Perfil</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No tienes amigos :(</p>
-        {% endif %}
+
+
+    <!-- Pop-up para Enviar Solicitud de Amistad -->
+    <div id="popup-enviar-solicitud" class="login-popup">
+        <div class="modal-content animate">
+            <div class="otherbtn">
+                <button type="button" id="closePopupEnviar">
+                    <img src="{{ url_for('static', filename='images/cerrar.svg') }}" alt="Cerrar" class="closebtn">
+                </button>
+            </div>
+            <h4>ENVIAR SOLICITUD</h4>
+             <form id= "enviar-solicitud-form" action="{{ url_for('enviar_solicitud_amigo') }}" method="POST">
+                <label for="friend_username">Nombre de usuario del amigo:</label>
+                <input type="text" id="friend_username" name="friend_username" placeholder="Usuario del amigo" required>
+                 <div class="button-container">
+                    <button class="main-button" type="submit">ENVIAR</button>
+                 </div>
+            </form>
+        </div>
     </div>
-    <div class="solicitudes">
-        <h2>Solicitudes</h2>
-        {% if solicitudes %}
-            <ul>
-                {% for solicitud in solicitudes %}
-                    <li>
-                        <strong>{{ solicitud[0] }}</strong><a href="{{ url_for('añadir_amigo', friend=solicitud[0]) }}">Añadir Amigo</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No tienes solicitudes</p>
-        {% endif %}
-    </div>
-    <div class="enviar_solicitud">
-        <h2>Enviar Solicitud de Amistad</h2>
-        <form action="{{ url_for('enviar_solicitud_amigo') }}" method="POST">
-            <label for="friend_username">Nombre de usuario del amigo:</label>
-            <input type="text" id="friend_username" name="friend_username" placeholder="Usuario del amigo" required>
-            <button type="submit">Enviar Solicitud</button>
+
+
+    <!-- Pop-up para Ver Solicitudes Pendientes -->
+    <div id="popup-solicitudes-pendientes" class="login-popup">
+        <form class="modal-content animate">
+            <div class="otherbtn">
+                <button type="button" id="closePopupSolicitudes">
+                    <img src="{{ url_for('static', filename='images/cerrar.svg') }}" alt="Cerrar" class="closebtn">
+                </button>
+            </div>
+            <h4>SOLICITUDES PENDIENTES</h4>
+            <div class="container-solicitudes">
+                <ul id="lista-solicitudes">
+                    <!-- Aquí se mostrarán las solicitudes -->
+                </ul>
+            </div>
         </form>
     </div>
+
+
+
+    <script>
+    // Pasar los datos de Flask al JavaScript
+    var amigos = {{ amigos | tojson | safe }};
+    var solicitudes = {{ solicitudes | tojson | safe }};
+    var añadirAmigoUrlBase = "{{ url_for('añadir_amigo', friend='') }}";
+    var borrarAmigoUrlBase = "{{ url_for('borrar_amigo', friend='') }}";
+    var cerrarIconUrl = "{{ url_for('static', filename='images/cerrar.svg') }}";
+    var aceptarIconUrl = "{{ url_for('static', filename='images/aceptar.svg') }}";
+    </script>
+
+    <script src="{{ url_for('static', filename='script/perfil.js') }}"></script>
+
 </body>
 </html>

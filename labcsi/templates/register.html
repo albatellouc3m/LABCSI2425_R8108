@@ -1,14 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width",
-          initial-scale="1.0">
-    <title>TESTS</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/register.css') }}"></head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}
+    Registro de Usuario
+{% endblock %}
+
+{% block extra_css %}
+    <!-- Estilos específicos para la página de registro -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/register.css') }}">
+{% endblock %}
+{% block content %}
     <div class="registro">
         <img src="{{ url_for('static', filename='images/quizzReg.svg') }}" alt="quizzReg" class="imagen-Reg">
 
@@ -52,6 +52,4 @@
             </div>
         </form>
     </div>
-
-</body>
-</html>
+{% endblock %}

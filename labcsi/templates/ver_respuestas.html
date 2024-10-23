@@ -2,19 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Respuestas del Test</title>
+    <title>Respuestas del Test: {{ name_test }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style/ver_respuestas.css') }}">
 </head>
 <body>
-    <h1>Respuestas del Test: {{ name_test }}</h1>
-    <ul>
-        {% for pregunta, respuesta in respuestas %}
-            <li>
-                <strong>Pregunta:</strong> {{ pregunta }} <br>
-                <strong>Tu Respuesta:</strong> {{ respuesta }}
-            </li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('perfil') }}">Volver a Mi Perfil</a>
+    <header>
+        <h1>Respuestas del Test: {{ name_test }}</h1>
+    </header>
+
+
+    <div class="respuestas">
+        <ul>
+            {% for pregunta, respuesta in respuestas %}
+                <li>
+                    <div class="pregunta-container">
+                        <strong>Pregunta:</strong> {{ pregunta }}
+                    </div>
+                    <div class="respuesta-container">
+                        <strong>Tu Respuesta:</strong>
+                            {% if respuesta == "1" %}
+                                Casi nada
+                            {% elif respuesta == "2" %}
+                                Poco
+                            {% elif respuesta == "3" %}
+                                Más o menos
+                            {% elif respuesta == "4" %}
+                                Bastante
+                            {% elif respuesta == "5" %}
+                                Mucho
+                            {% else %}
+                                {{ respuesta }} <!-- Para cualquier otro valor no esperado -->
+                            {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <footer>
+        <a href="{{ url_for('perfil') }}" class="main-button">Volver a Mi Perfil</a>
+    </footer>
+
 </body>
 </html>
