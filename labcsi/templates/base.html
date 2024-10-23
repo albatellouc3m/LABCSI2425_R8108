@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}My Application{% endblock %}</title>
+
+    <!-- Estilos comunes para todas las páginas -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/base.css') }}">
+
+    <!-- Bloque para agregar estilos adicionales específicos de la página -->
+    {% block extra_css %}
+    {% endblock %}
+
+    <!-- jQuery común para todas las páginas -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Contenedor de mensajes flash -->
+    <div id="flask-messages" style="display: none;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul id="messages">
+                    {% for category, message in messages %}
+                        <li data-category="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Código para mostrar los mensajes flash -->
+    <script>
+        $(document).ready(function() {
+            $('#messages li').each(function() {
+                var message = $(this).text();
+                var category = $(this).data('category');
+                if (category === "success") {
+                    alert("Éxito: " + message);
+                } else if (category === "danger") {
+                    alert("Error: " + message);
+                } else {
+                    alert(message);
+                }
+            });
+        });
+    </script>
+
+    <!-- Bloque para contenido específico de cada página -->
+    {% block content %}
+    {% endblock %}
+
+</body>
+</html>
