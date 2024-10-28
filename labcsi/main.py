@@ -226,7 +226,7 @@ def obtener_usuarios():
 
     try:
         usuarios = sql.obtener_usuarios(session['username'])
-        app.logger.debug("Usuarios encontrados:", usuarios)  # Para verificar los datos en la consola
+        app.logger.debug(f"Usuarios encontrados: {usuarios}")  # Para verificar los datos en la consola
         return jsonify({"usuarios": usuarios})
     except Exception as e:
         app.logger.debug(f"Error en la consulta: {e}")
