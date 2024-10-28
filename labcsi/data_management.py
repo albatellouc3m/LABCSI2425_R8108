@@ -218,7 +218,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key
 # Obtener los resultados de los tests del usuario
 def obtener_resultados_usuario(username, key):
     try:
-        resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], key),desencriptar_datos_con_clave_derivada(r[2], key)) for r in sql.recuperar_resultados_usuario(username)]
+        resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], key),desencriptar_datos_con_clave_derivada(r[2], key),r[3]) for r in sql.recuperar_resultados_usuario(username)]
         return resultados_desencriptados
     except Exception as e:
         return f"Error al obtener los resultados: {str(e)}"

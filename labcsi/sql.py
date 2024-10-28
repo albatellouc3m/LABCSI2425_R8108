@@ -168,7 +168,7 @@ def guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion
 
 # para ver_perfil
 def recuperar_resultados_usuario(username):
-    cursor.execute("SELECT name_test, result, desc_result FROM Results WHERE username = %s ORDER BY result_id DESC", (username,))
+    cursor.execute("SELECT name_test, result, desc_result, date_result FROM Results WHERE username = %s ORDER BY result_id DESC", (username,))
     return cursor.fetchall()
 
 
