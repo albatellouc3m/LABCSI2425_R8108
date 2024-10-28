@@ -250,10 +250,10 @@ def delete_result():
         sql.cursor.execute("DELETE FROM Results WHERE username = %s AND name_test = %s", (username, test_name))
 
         sql.db.commit()  # Confirmar los cambios
-        flash("Resultado y respuestas del test eliminados correctamente", "success")
+        app.logger.debug("Resultado y respuestas del test eliminados correctamente", "success")
     except Exception as e:
         sql.db.rollback()  # Revertir los cambios si hay un error
-        flash(f"Error al eliminar el resultado y las respuestas: {e}", "danger")
+        app.logger.debug(f"Error al eliminar el resultado y las respuestas: {e}", "danger")
 
     return redirect(url_for('perfil'))
 
