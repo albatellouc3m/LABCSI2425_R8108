@@ -233,5 +233,29 @@ def obtener_usuarios():
         return jsonify({"error": "Error en la base de datos"}), 500
 
 
+@app.route('/delete_result', methods=['POST'])
+def delete_result():
+    if 'username' not in session:
+        return jsonify({"error": "Usuario no autenticado"}), 403
+
+    username = session['username']
+    test_name = request.form['name_test']
+
+    # Eliminar las respuestas y el resultado del test
+    try:
+        # Primero eliminar las respuestas del usuario para el test
+        sql.cursor.execute("DELETE FROM UserAnswers WHERE username = %s AND name_test = %s", (username, test_name))
+
+        # Luego eliminar el resultado del test
+        sql.cursor.execute("DELETE FROM Results WHERE username = %s AND name_test = %s", (username, test_name))
+
+        sql.db.commit()  # Confirmar los cambios
+        flash("Resultado y respuestas del test eliminados correctamente", "success")
+    except Exception as e:
+        sql.db.rollback()  # Revertir los cambios si hay un error
+        flash(f"Error al eliminar el resultado y las respuestas: {e}", "danger")
+
+    return redirect(url_for('perfil'))
+
 app.run(debug=True)
 

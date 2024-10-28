@@ -332,6 +332,7 @@ input[type=text] {
     align-items: center;
 }
 .resultados li{
+    position: relative;
     background-color: white;
     margin: 5vh 0;
     padding: 2vh;
@@ -472,4 +473,12 @@ footer {
 
 .dropdown-list li:hover {
     background-color: #ddd;
+}
+
+.deletebtn img{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2vw;
+    margin: 1vh;
 }
