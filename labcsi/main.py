@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
-from flask_session import Session
+#from flask_session import Session
 import data_management
 import sql
 
@@ -10,7 +10,7 @@ app.secret_key = os.urandom(24) # Clave secreta para la session
 # Configuracion de la session almacenada en el servidor
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
-Session(app)  # Usamos Flask-Session para guardar la session en el lado del servidor
+#Session(app)  # Usamos Flask-Session para guardar la session en el lado del servidor
 
 # TODO: mejoras: Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
 # TODO: mejoras: Captura de excepciones (de forma sistemática y con su listado de excepciones) ya tenemos app.loger.debug, solamente hay que llamar a algo que de un listado de excepciones al finalizar
@@ -226,8 +226,7 @@ def obtener_usuarios():
 
     try:
         usuarios = sql.obtener_usuarios(session['username'])
-        app.logger.debug("Usuarios encontrados:", usuarios)  # Para verificar los datos en la consola
-        return jsonify({"usuarios": usuarios})
+
     except Exception as e:
         app.logger.debug(f"Error en la consulta: {e}")
         return jsonify({"error": "Error en la base de datos"}), 500
@@ -250,10 +249,8 @@ def delete_result():
         sql.cursor.execute("DELETE FROM Results WHERE username = %s AND name_test = %s", (username, test_name))
 
         sql.db.commit()  # Confirmar los cambios
-        flash("Resultado y respuestas del test eliminados correctamente", "success")
     except Exception as e:
         sql.db.rollback()  # Revertir los cambios si hay un error
-        flash(f"Error al eliminar el resultado y las respuestas: {e}", "danger")
 
     return redirect(url_for('perfil'))
 
