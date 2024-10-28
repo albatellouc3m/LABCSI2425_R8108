@@ -1,18 +1,19 @@
 import os
 
-from flask import Flask, render_template, request, redirect, flash, session, url_for, jsonify
-#from flask_session import Session
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask_session import Session
 import data_management
 import sql
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24) # Secret key for Flask session
-# Configure server-side session
-app.config["SESSION_TYPE"] = "filesystem"  # Alternatively, use Redis for production
-app.config["SESSION_PERMANENT"] = False  # Set to True if you want permanent sessions
-#Session(app)  # Use Flask-Session to store sessions server-side
+app.secret_key = os.urandom(24) # Clave secreta para la session
+# Configuracion de la session almacenada en el servidor
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = False
+Session(app)  # Usamos Flask-Session para guardar la session en el lado del servidor
 
-# TODO; Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
+# TODO: mejoras: Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
+# TODO: mejoras: Captura de excepciones (de forma sistemática y con su listado de excepciones) ya tenemos app.loger.debug, solamente hay que llamar a algo que de un listado de excepciones al finalizar
 @app.route("/")
 def home():
     # Verifica si el usuario está en la sesión
@@ -20,33 +21,6 @@ def home():
 
     # Renderiza la página de inicio, pasando el nombre de usuario si está autenticado
     return render_template("home.html", username=username)
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        status, message = data_management.autentificar_usuario(username, password)
-        if status == 0:  # Si la autenticación fue exitosa
-            session["username"] = username
-            salt = sql.obtener_salt_usuario(username)
-            session["salt"] = salt
-            print(f"Slat upon login: {salt}")
-            encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
-            session["encryption_key"] = encryption_key
-            print(f"key upon login: {encryption_key}")
-
-            app.logger.debug("Inicio de sesión exitoso")
-            flash("Inicio de sesión exitoso", "success")
-            return redirect(url_for("home"))  # Redirigir a la página de inicio
-        else:
-            app.logger.debug("Fallo al iniciar sesion")
-            flash(message, "danger")  # Mostrar un mensaje de error si el login falló
-            return redirect(url_for("login"))
-    return render_template("login.html")
-
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -60,38 +34,57 @@ def register_user():
         surname2 = request.form['surname2']
         email = request.form['email']
 
+        # El salt que usa cada usuario para generar su clave se mantendra constante haciendo así que su clave sea siempre la misma. Esto resulta util para poder compartirla con sus amigos.
         salt = os.urandom(16)
-        print(f"Salt upon register: {salt}")
 
         # Llamar a la función registrar_usuario de data_management.py
         status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
 
         if status == 0:
-            flash("Registro exitoso", "success")
             app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
+            app.logger.debug(message)
             return redirect("/login")
         else:
             app.logger.debug(f"Registro fallido {message}")
-            flash(message, "danger")
             return redirect("/register")
     else:
         # Mostrar el formulario de registro
         return render_template("register.html")
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        status, message = data_management.autentificar_usuario(username, password)
+        if status == 0:  # Si la autenticación fue exitosa
+            session["username"] = username
+            salt = sql.obtener_salt_usuario(username)
+            session["salt"] = salt
+            encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
+            session["encryption_key"] = encryption_key
+
+            app.logger.debug("Inicio de sesión exitoso")
+            return redirect(url_for("home"))  # Redirigir a la página de inicio
+        else:
+            app.logger.debug("Fallo al iniciar sesion") # Mostrar un mensaje de error si el login falló
+            return redirect(url_for("login"))
+    return render_template("login.html")
+
+
 @app.route("/test/<string:name_test>")
 def mostrar_test(name_test):
     # Obtener los detalles del test
-    test = data_management.obtener_test(name_test)
+    test = sql.obtener_test(name_test)
     if isinstance(test, str):  # Si hubo un error al obtener el test
-        flash(test, "danger")
         app.logger.debug(test)
         return redirect("/")
 
     # Obtener las preguntas del test
-    preguntas = data_management.obtener_preguntas(name_test)
+    preguntas = sql.obtener_preguntas(name_test)
     if isinstance(preguntas, str):  # Si hubo un error al obtener las preguntas
-        flash(preguntas, "danger")
         app.logger.debug(preguntas)
         return redirect("/")
 
@@ -104,7 +97,7 @@ def mostrar_test(name_test):
 def guardar_respuestas():
     username = session["username"]  # Recuperar el usuario autenticado de la sesión
     if not username:
-        flash("Usuario no autenticado", "danger")
+        app.logger.debug("Usuario no autenticado")
         return redirect("/login")
 
     name_test = request.form['name_test']
@@ -117,17 +110,17 @@ def guardar_respuestas():
     status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key, salt)
 
     if status == 0:
-        flash(message, "Success")
         app.logger.debug(message)
         return render_template("mostrar_resultado.html", name_test=name_test, result=result, description=description)
     else:
-        flash(message, "danger")
         app.logger.debug(f"Fallo al guardar respuestas: {message}")
         return redirect("/")
 
 @app.route("/logout")
 def logout():
     session.pop("username", None)  # Eliminar el nombre de usuario de la sesión
+    session.pop("encryption_key", None)
+    session.pop("salt", None)
     app.logger.debug("Has cerrado sesión exitosamente")
     return redirect(url_for("home"))
 
@@ -140,7 +133,6 @@ def perfil():
 
     username = session["username"]
     key = session["encryption_key"]
-    print(f"key in profile: {key}")
     resultados = data_management.obtener_resultados_usuario(username, key)
     if isinstance(resultados, str):
         app.logger.debug(resultados)
@@ -153,8 +145,8 @@ def perfil():
 
     solicitudes = sql.ver_solicitudes([username])
 
-    if isinstance(amigos, str):
-        app.logger.debug(amigos)
+    if isinstance(solicitudes, str):
+        app.logger.debug(solicitudes)
         return redirect("/")
 
     return render_template("ver_perfil.html", username=username, resultados=resultados, amigos=amigos, solicitudes=solicitudes)
@@ -163,21 +155,20 @@ def perfil():
 @app.route("/enviar_solicitud_amigo", methods=["POST"])
 def enviar_solicitud_amigo():
     if "username" not in session:
-        flash("Por favor, inicia sesión para continuar", "danger")
+        app.logger.debug("Por favor, inicia sesión para continuar")
         return redirect(url_for("login"))
 
     username = session["username"]
     key = session["encryption_key"]
+    # La llave del solicitante se guarda encriptada con la clave del sistema para que cuando se acepte la solicitud se desencripte y se vuelva a encriptar con la clave del receptor de la solicitud
     key_encriptada = data_management.encriptar_datos_clave_sistema(key)
     friend_username = request.form["friend_username"]
 
     status, message = data_management.crear_solicitud(username, friend_username, key_encriptada)
 
     if status == 0:
-        flash("Solicitud de amistad enviada exitosamente", "success")
         app.logger.debug("Solicitud de amistad enviada exitosamente")
     else:
-        flash(f"No se pudo enviar la solicitud: {message}", "danger")
         app.logger.debug(f"No se pudo enviar la solicitud: {message}")
 
     return redirect(url_for("perfil"))
@@ -209,7 +200,6 @@ def ver_perfil_amigo(friend):
     if isinstance(resultados_amigo, str):
         app.logger.debug(resultados_amigo)
         return redirect("/")
-    # print(f"{friend},{resultados_amigo}, {contraseña_amigo_desencriptada}")
     return render_template("ver_resultados_amigo.html", username=friend, resultados=resultados_amigo, contraseña_amigo=key_amigo_desencriptada)
 
 
@@ -228,31 +218,18 @@ def ver_respuestas_usuario(name_test):
 
     return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
+
 @app.route('/obtener_usuarios', methods=['GET'])
 def obtener_usuarios():
     if 'username' not in session:
         return jsonify({"error": "Usuario no autenticado"}), 403
 
     try:
-        sql.cursor.execute("""
-            SELECT username 
-            FROM Users 
-            WHERE username != %s
-            AND username NOT IN (
-                SELECT username2 
-                FROM friends 
-                WHERE username1 = %s AND status IN ('aceptado', 'solicitado')
-                UNION
-                SELECT username1 
-                FROM friends 
-                WHERE username2 = %s AND status IN ('aceptado', 'solicitado')
-            )
-        """, (session['username'], session['username'], session['username']))
-        usuarios = [row[0] for row in sql.cursor.fetchall()]
-        print("Usuarios encontrados:", usuarios)  # Para verificar los datos en la consola
+        usuarios = sql.obtener_usuarios(session['username'])
+        app.logger.debug("Usuarios encontrados:", usuarios)  # Para verificar los datos en la consola
         return jsonify({"usuarios": usuarios})
     except Exception as e:
-        print(f"Error en la consulta: {e}")
+        app.logger.debug(f"Error en la consulta: {e}")
         return jsonify({"error": "Error en la base de datos"}), 500
 
 

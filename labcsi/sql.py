@@ -35,10 +35,40 @@ def insertar_usuario(username, password, email, name, surname1, surname2, salt):
     try:
         cursor.execute(sql, values)  # Ejecutar la consulta con los valores
         db.commit()  # Confirmar los cambios
-        return (0, "Success")
+        return (0, f"{password}, {email}, {name}, {surname1}, {surname2}")
     except mysql.connector.Error as err:
         db.rollback()
-        return (4, f"Database error: {err}, {len(email)}")
+        return (4, f"Database error: {err}")
+
+
+def obtener_preguntas(name_test):
+    try:
+        cursor.execute("SELECT question FROM Questions WHERE name_test = %s", (name_test,))
+        preguntas = cursor.fetchall()
+        return preguntas
+    except Exception as e:
+        return f"Error al obtener las preguntas: {e}"
+
+
+def obtener_test(name_test):
+    try:
+        cursor.execute("SELECT name_test, description FROM Test WHERE name_test = %s", (name_test,))
+        test = cursor.fetchone()
+        return test
+    except Exception as e:
+        return f"Error al obtener el test: {e}"
+
+
+def obtener_respuestas(name_test, username):
+    try:
+        cursor.execute(
+            "SELECT question, puntuacion FROM UserAnswers WHERE name_test = %s AND username = %s",
+            (name_test, username)
+        )
+        respuestas = cursor.fetchall()
+        return respuestas
+    except Exception as e:
+        return f"Error al obtener las respuestas: {e}"
 
 
 # Guardar las respuestas del usuario en la base de datos
@@ -57,19 +87,54 @@ def guardar_respuestas(username, name_test, preguntas, respuestas):
         return (1, f"Error al guardar las respuestas: {e}")
 
 
-def calcular_resultado(username, name_test):
-    # Calcular el resultado del test usando el procedimiento almacenado
-    cursor.execute("CALL calcular_resultado_test(%s, %s)", (username, name_test))
+def borrar_ultimas_respuestas(username):
+    cursor.execute("""DELETE FROM useranswers
+    WHERE answer_id IN (
+        SELECT answer_id
+        FROM useranswers
+        WHERE username = %s
+        ORDER BY answer_id DESC
+        LIMIT 10
+    );""", (username,))
     db.commit()
 
 
+def calcular_resultado(username, name_test):
+    # Calcular el resultado del test usando el procedimiento almacenado
+    try:
+        cursor.execute("CALL calcular_resultado_test(%s, %s)", (username, name_test))
+        db.commit()
+        return (0, "Resultado guardado correctamente")
+    except Exception as e:
+        db.rollback()
+        return(2, f"Error al calcular resultado: {e}")
+
+
+def borrar_ultimo_resultado(username):
+    cursor.execute("""
+        DELETE FROM results
+        WHERE result_id = (
+            SELECT result_id
+            FROM results
+            WHERE username = %s
+            ORDER BY result_id DESC
+            LIMIT 1
+        );
+    """, (username,))
+    db.commit()
+
+
+
 def recuperar_resultado(username, name_test):
-    # Recuperar el resultado calculado de la tabla Results
-    cursor.execute(
-        "SELECT result_id, result, desc_result  FROM Results WHERE username = %s AND name_test = %s ORDER BY date_result DESC LIMIT 1",
-        (username, name_test))
-    id_resultado, resultado, description = cursor.fetchone()  # Tomar los valores del resultado más reciente
-    return id_resultado, resultado, description
+    try:
+        # Recuperar el resultado calculado de la tabla Results
+        cursor.execute(
+            "SELECT result_id, result, desc_result  FROM Results WHERE username = %s AND name_test = %s ORDER BY result_id DESC LIMIT 1",
+            (username, name_test))
+        id_resultado, resultado, description = cursor.fetchone()  # Tomar los valores del resultado más reciente
+        return 0, "resultados recuperados correctamente", id_resultado, resultado, description
+    except Exception as e:
+        return 7, "fallo al recuperar resultados", None, None, None
 
 
 def guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas):
@@ -84,7 +149,7 @@ def guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_en
         return (0, "Respuestas encriptadas guardadas correctamente")
     except Exception as e:
         db.rollback()  # Revertir en caso de error
-        return (1, f"Error al guardar las respuestas encriptadas: {e}")
+        return (3, f"Error al guardar las respuestas encriptadas: {e}")
 
 
 def guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada):
@@ -98,13 +163,14 @@ def guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion
         return (0, "Resultado encriptado guardadas correctamente")
     except Exception as e:
         db.rollback()
-        return (1,f"Error al guardar el resultado encriptado: {e}, {len(descripcion_encriptada)}")
+        return (5,f"Error al guardar el resultado encriptado: {e}, {len(descripcion_encriptada)}")
 
 
 # para ver_perfil
 def recuperar_resultados_usuario(username):
-    cursor.execute("SELECT name_test, result, desc_result, date_result FROM Results WHERE username = %s ORDER BY date_result DESC", (username,))
+    cursor.execute("SELECT name_test, result, desc_result, date_result FROM Results WHERE username = %s ORDER BY result_id DESC", (username,))
     return cursor.fetchall()
+
 
 # Recuperar las respuestas del usuario para un test específico
 def recuperar_respuestas_usuario(username, name_test):
@@ -155,7 +221,7 @@ def enviar_solicitud(petidor, receptor, key_petidor):
         return (0, "Solicitud enviada")
     except Exception as e:
         db.rollback()
-        return (1, f"Error al enviar solicitud: {str(e)}")
+        return (6, f"Error al enviar solicitud: {str(e)}")
 
 
 def ver_solicitudes(username):
@@ -167,7 +233,7 @@ def ver_solicitudes(username):
         return cursor.fetchall()
     except Exception as e:
         db.rollback()
-        return f"fallo al ver amistades: {str(e)}"
+        return f"fallo al ver solicitudes: {str(e)}"
 
 
 def coger_key_solicitante(solicitante, solicitado):
@@ -177,10 +243,6 @@ def coger_key_solicitante(solicitante, solicitado):
             (solicitante, solicitado)
         )
         return cursor.fetchall()[0][0]
-        # key_string = cursor.fetchall()[0][0]
-        # print(key_string)
-        # key_binary = base64.b64decode(key_string + '=' * (-len(key_string) % 4))
-        # return key_binary
     except Exception as e:
         db.rollback()
         return f"fallo al ver amistades: {str(e)}"
@@ -202,3 +264,19 @@ def obtener_salt_usuario(username):
     result = cursor.fetchone()
     return result[0]
 
+def obtener_usuarios(username):
+    cursor.execute("""
+        SELECT username 
+        FROM Users 
+        WHERE username != %s
+        AND username NOT IN (
+            SELECT username2 
+            FROM friends 
+            WHERE username1 = %s AND status IN ('aceptado', 'solicitado')
+            UNION
+            SELECT username1 
+            FROM friends 
+            WHERE username2 = %s AND status IN ('aceptado', 'solicitado')
+        )
+    """, (username, username, username))
+    return [row[0] for row in cursor.fetchall()]

@@ -8,6 +8,7 @@ import os
 import sql  # Importar la conexión a la base de datos y el cursor de sql.py
 import base64
 
+####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
 def registrar_usuario(username, password, name, surname1, surname2, email, salt):
     if username == "":
@@ -21,9 +22,16 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt)
     salt = os.urandom(16)
 
     # No encriptamos el username porque se usa en referencias en la base de datos
+    # para encriptar los datos de registro usamos encripcion simetrica con la clave del sistema
     encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos_clave_sistema(name, surname1, surname2, email)
 
     return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt)
+
+
+def hash_password(password):
+    # Generar un salt y hashear la contraseña
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode(), salt).decode()
 
 
 # Función para autenticar usuarios con la base de datos
@@ -32,7 +40,7 @@ def autentificar_usuario(username, password):
     result = sql.cursor.fetchone()
 
     if result:
-        stored_hash = result[0]  # Asegúrate de que el hash se obtiene correctamente
+        stored_hash = result[0]
         if bcrypt.checkpw(password.encode(), stored_hash.encode()):  # Convertir el hash recuperado a bytes
             return (0, "Success")
         else:
@@ -41,91 +49,7 @@ def autentificar_usuario(username, password):
         return (2, "User not found")
 
 
-
-# Función para guardar resultados de los tests en la base de datos
-def save_test_result(username, test_name, answers):
-    sql.cursor.execute("SELECT * FROM Users WHERE username = %s", (username,))
-    result = sql.cursor.fetchone()
-
-    if not result:
-        return (1, "User not found")
-
-    # Convertir las respuestas en una cadena (puedes usar JSON si es complejo)
-    answers_str = str(answers)
-
-    # Guardar los resultados del test en la base de datos
-    try:
-        sql.cursor.execute(
-            "INSERT INTO TestResults (username, test_name, answers) VALUES (%s, %s, %s)",
-            (username, test_name, answers_str)
-        )
-        sql.db.commit()
-        return (0, "Test results saved")
-    except Exception as e:
-        sql.db.rollback()
-        return (2, f"Database error: {e}")
-
-# Función para cargar los resultados de los tests
-def load_test_results(username):
-    sql.cursor.execute("SELECT test_name, answers FROM TestResults WHERE username = %s", (username,))
-    results = sql.cursor.fetchall()
-
-    if results:
-        return results
-    else:
-        return (1, "No results found for this user")
-
-
-# Obtener las preguntas de un test predeterminado
-def obtener_preguntas(name_test):
-    try:
-        sql.cursor.execute("SELECT question FROM Questions WHERE name_test = %s", (name_test,))
-        preguntas = sql.cursor.fetchall()
-        return preguntas
-    except Exception as e:
-        return f"Error al obtener las preguntas: {e}"
-
-# Obtener la información del test
-def obtener_test(name_test):
-    try:
-        sql.cursor.execute("SELECT name_test, description FROM Test WHERE name_test = %s", (name_test,))
-        test = sql.cursor.fetchone()
-        return test
-    except Exception as e:
-        return f"Error al obtener el test: {e}"
-
-
-# Obtener respuestas del usuario para un test específico
-def obtener_respuestas(name_test, username):
-    try:
-        sql.cursor.execute(
-            "SELECT question, puntuacion FROM UserAnswers WHERE name_test = %s AND username = %s",
-            (name_test, username)
-        )
-        respuestas = sql.cursor.fetchall()
-        return respuestas
-    except Exception as e:
-        return f"Error al obtener las respuestas: {e}"
-
-
-# logica para encriptar las respuestas y los resultados
-
-# Generar la clave de encriptación y guardarla en un archivo seguro
-def generar_clave():
-    key = Fernet.generate_key()
-    with open("clave.key", "wb") as key_file:
-        key_file.write(key)
-
-def cargar_clave():
-    return open("clave.key", "rb").read()
-
-def hash_password(password):
-    # Generar un salt y hashear la contraseña
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode(), salt).decode()
-
-# TODO: Mover a otra carpeta las cosas de encriptar y tal?
-####ENCRIPTAR COSAS######
+####ENCRIPTACION######
 def encriptar_datos_clave_sistema(*args):
     key = cargar_clave()
     f = Fernet(key)
@@ -139,8 +63,18 @@ def encriptar_datos_clave_sistema(*args):
     return encrypted_values
 
 
+# Generar la clave de encriptación y guardarla en un archivo seguro
+def generar_clave():
+    key = Fernet.generate_key()
+    with open("clave.key", "wb") as key_file:
+        key_file.write(key)
 
-# variable is_binary defines whether the data that is encripted is binary, default entry is binary.
+
+def cargar_clave():
+    return open("clave.key", "rb").read()
+
+
+# variable is_binary defines whether the data that is encrypted in binary, default entry is binary.
 def desencriptar_datos_clave_sistema(*args, is_binary=True):
     key = cargar_clave()
     f = Fernet(key)
@@ -232,6 +166,7 @@ def encriptar_respuestas(respuestas, resultado, description, key, salt):
     return respuestas_encriptadas, resultado_encriptado, descripcion_encriptada
 
 
+####MANEJO DE DATOS######
 # Función para guardar respuestas y calcular el resultado encriptado
 def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key, salt):
     # Primero, guardar las respuestas del usuario llamando a guardar_respuestas
@@ -239,33 +174,54 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key
     if status != 0:
         return status, message, None, None
 
-    # Si las respuestas se guardaron correctamente
-    sql.calcular_resultado(username, name_test)
+    status, message = sql.calcular_resultado(username, name_test)
+    if status != 0:
+        # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
+        sql.borrar_ultimas_respuestas(username)
+        return status, message, None, None
 
-    id_resultado, resultado, description = sql.recuperar_resultado(username, name_test)
+    status, message, id_resultado, resultado, description = sql.recuperar_resultado(username, name_test)
+    if status != 0:
+        # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
+        sql.borrar_ultimas_respuestas(username)
+        sql.borrar_ultimo_resultado(username)
+        return status, message, None, None
 
     # Encriptar las respuestas y el resultado
-    respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, key, salt)
+    try:
+        respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, key, salt)
+    except Exception as e:
+        # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
+        sql.borrar_ultimas_respuestas(username)
+        sql.borrar_ultimo_resultado(username)
+        return 1, f"fallo al encriptar respuestas: {e}", None, None
 
     # Actualizar las respuestas y el resultado encriptadas
     status, message = sql.guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas)
     if status != 0:
-        return status, message, None, None
-    status, message = sql.guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada)
-    if status != 0:
+        # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
+        sql.borrar_ultimas_respuestas(username)
+        sql.borrar_ultimo_resultado(username)
         return status, message, None, None
 
-    return 0, "Respuestas guardadas y resultado calculado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes", resultado, description
+    status, message = sql.guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada)
+    if status != 0:
+        # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
+        sql.borrar_ultimas_respuestas(username)
+        sql.borrar_ultimo_resultado(username)
+        return status, message, None, None
+
+    return 0, f"Respuestas guardadas y resultado calculado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes\nRespuestas Encriptadas: {respuestas_encriptadas}\nResultado Encriptado: {resultado_encriptado}\nDescripcion Encriptada {descripcion_encriptada}", resultado, description
 
 
 
 # Obtener los resultados de los tests del usuario
 def obtener_resultados_usuario(username, key):
-    # try:
-    resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], key),desencriptar_datos_con_clave_derivada(r[2], key),r[3]) for r in sql.recuperar_resultados_usuario(username)]
-    return resultados_desencriptados
-    # except Exception as e:
-    #     return f"Error al obtener los resultados: {str(e)}"
+    try:
+        resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], key),desencriptar_datos_con_clave_derivada(r[2], key),r[3]) for r in sql.recuperar_resultados_usuario(username)]
+        return resultados_desencriptados
+    except Exception as e:
+        return f"Error al obtener los resultados: {str(e)}"
 
 
 # Obtener las respuestas del usuario para un test específico
@@ -286,31 +242,8 @@ def crear_amistad(username, friend, key, salt):
     friend_key_encriptada = sql.coger_key_solicitante(friend, username)
     friend_key = desencriptar_datos_clave_sistema(friend_key_encriptada)
     friend_salt = sql.obtener_salt_usuario(friend)
+    # Encriptamos la clave del que acepta la solicitud (username) con la clave del solicitante (friend)
     username_encripted_key = encriptar_datos_con_clave_derivada(key, friend_key, friend_salt)
+    # Encriptamos la clave del solicitante (friend) con la clave del que acepta la solicitud (username)
     friend_encripted_key = encriptar_datos_con_clave_derivada(friend_key, key, salt)
     sql.grabar_amistad(username, friend, username_encripted_key, friend_encripted_key)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
