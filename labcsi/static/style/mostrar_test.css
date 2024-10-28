@@ -36,6 +36,15 @@ h1 {
     font-size: 6vh;
     margin: 8vh 0;
 }
+h2 {
+    display: flex;
+    justify-content: center;
+    font-family: 'Spiny Lobster', Verdana;
+    color: #7192A5;
+    font-size: 4vh;
+    margin: 8vh 0;
+}
+
 .questions{
     display: flex;
     flex-direction: column;

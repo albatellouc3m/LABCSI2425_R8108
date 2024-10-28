@@ -150,3 +150,26 @@ $(document).ready(function() {
             $('.dropdown-list').hide();  // Oculta el menú desplegable
         }
     });
+
+$(document).on('click', '#deletebtn', function() {
+    const name_test = $(this).closest('li').find('strong').text();
+
+    const confirmDelete = confirm("¿Estás seguro de que quieres eliminar este resultado?");
+    if (confirmDelete) {
+        $.ajax({
+            url: '/delete_result',
+            type: 'POST',
+            data: { name_test: name_test },
+            success: function(response) {
+                if (response.error) {
+                    alert(response.error);
+                } else {
+                    location.reload(); // Recargar la página del perfil
+                }
+            },
+            error: function() {
+                alert("Error al eliminar el resultado. Por favor, inténtelo de nuevo.");
+            }
+        });
+    }
+});

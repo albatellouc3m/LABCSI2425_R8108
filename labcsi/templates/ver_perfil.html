@@ -60,6 +60,11 @@
             <ul>
                 {% for resultado in resultados %}
                     <li>
+                        <div class="deletebtn">
+                            <button id="deletebtn">
+                                <img src="{{ url_for('static', filename='images/cerrar.svg') }}" alt="Extrovertido/a y Líder natural">
+                            </button>
+                        </div>
                         <div class="resultado-container">
                             <p><strong>{{ resultado[0] }}</strong> - Resultado: {{ resultado[1] }}</p>
                         </div>
