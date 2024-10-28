@@ -434,3 +434,42 @@ footer {
 .main-button:hover {
     background-color: #7192A5;
 }
+
+.search{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+.searchbtn{
+    width: 2vw;
+    height: auto;
+}
+
+.dropdown-list {
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    top: 60%;  /* Coloca la lista justo debajo del botón */
+    left: 0;    /* Alinea la lista a la izquierda del botón */
+    width: 78%;  /* Hace que la lista tenga el mismo ancho que el botón */
+    background-color: white;
+    z-index: 1000;
+    display: none; /* Inicialmente oculta */
+    margin-left: 2.56vw;
+}
+.dropdown-list-amigos{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.dropdown-list li {
+    list-style: none;
+    padding: 2vh;
+    cursor: pointer;
+}
+
+.dropdown-list li:hover {
+    background-color: #ddd;
+}

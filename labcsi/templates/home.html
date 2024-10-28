@@ -19,7 +19,7 @@
                     <img src="{{ url_for('static', filename='images/perfil.svg') }}" alt="perfil" class="imagen-perfil" onclick="toggleDropdown(event)">
                     <div id="dropdown-menu" class="dropdown-content" style="display: none;">
                         <a href="/perfil" class="main-menu_link">MI PERFIL</a>
-                        <a href="/logout" class="main-menu_link">CERRAR SESIÓN</a>
+                        <a href="/logout" id="cerrarSesion" class="main-menu_link">CERRAR SESIÓN</a>
                     </div>
                 </li>
             {% else %}

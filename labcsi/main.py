@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, redirect, flash, session, url_for
+from flask import Flask, render_template, request, redirect, flash, session, url_for, jsonify
 #from flask_session import Session
 import data_management
 import sql
@@ -73,7 +73,7 @@ def register_user():
         else:
             app.logger.debug(f"Registro fallido {message}")
             flash(message, "danger")
-            return redirect("/")
+            return redirect("/register")
     else:
         # Mostrar el formulario de registro
         return render_template("register.html")
@@ -228,4 +228,33 @@ def ver_respuestas_usuario(name_test):
 
     return render_template("ver_respuestas.html", name_test=name_test, respuestas=respuestas)
 
+@app.route('/obtener_usuarios', methods=['GET'])
+def obtener_usuarios():
+    if 'username' not in session:
+        return jsonify({"error": "Usuario no autenticado"}), 403
+
+    try:
+        sql.cursor.execute("""
+            SELECT username 
+            FROM Users 
+            WHERE username != %s
+            AND username NOT IN (
+                SELECT username2 
+                FROM friends 
+                WHERE username1 = %s AND status IN ('aceptado', 'solicitado')
+                UNION
+                SELECT username1 
+                FROM friends 
+                WHERE username2 = %s AND status IN ('aceptado', 'solicitado')
+            )
+        """, (session['username'], session['username'], session['username']))
+        usuarios = [row[0] for row in sql.cursor.fetchall()]
+        print("Usuarios encontrados:", usuarios)  # Para verificar los datos en la consola
+        return jsonify({"usuarios": usuarios})
+    except Exception as e:
+        print(f"Error en la consulta: {e}")
+        return jsonify({"error": "Error en la base de datos"}), 500
+
+
 app.run(debug=True)
+

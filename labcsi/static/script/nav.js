@@ -1,12 +1,3 @@
-
-document.getElementById("login-button").addEventListener("click", function() {
-    window.location.href = "/login";  // Redirige a la página de inicio de sesión
-});
-
-document.getElementById("register-button").addEventListener("click", function() {
-    window.location.href = "/register";  // Redirige a la página de registro (home en este caso)
-});
-
 function toggleDropdown(event) {
     event.stopPropagation(); // Detiene la propagación del evento para evitar que se oculte inmediatamente
     const dropdownMenu = document.getElementById("dropdown-menu");

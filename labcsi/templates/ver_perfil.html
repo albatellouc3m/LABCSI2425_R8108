@@ -160,9 +160,17 @@
             <h4>ENVIAR SOLICITUD</h4>
              <form id= "enviar-solicitud-form" action="{{ url_for('enviar_solicitud_amigo') }}" method="POST">
                 <label for="friend_username">Nombre de usuario del amigo:</label>
-                <input type="text" id="friend_username" name="friend_username" placeholder="Usuario del amigo" required>
+                 <div class="search">
+                     <input type="text" id="friend_username" name="friend_username" placeholder="Usuario del amigo" required>
+                     <button id="button-search">
+                         <img src="{{ url_for('static', filename='images/lupa.svg') }}" alt="lupa" class="searchbtn">
+                     </button>
+                     <div class="dropdown-list-amigos">
+                         <ul class="dropdown-list"></ul>
+                     </div>
+                 </div>
                  <div class="button-container">
-                    <button class="main-button" type="submit">ENVIAR</button>
+                    <button class="main-button" type="submit" id="enviar-solicitud">ENVIAR</button>
                  </div>
             </form>
         </div>
@@ -185,7 +193,6 @@
             </div>
         </form>
     </div>
-
 
 
     <script>

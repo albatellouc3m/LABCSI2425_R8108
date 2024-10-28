@@ -6,7 +6,38 @@ body {
     background-color: #f4f4f4;
 }
 
+@font-face {
+    font-family: 'Spiny Lobster';
+    src: url('/static/fonts/SpinyLobster.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 
+@font-face {
+    font-family: 'Cookies';
+    src: url('/static/fonts/CookiesMagis.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coolvetica';
+    src: url('/static/fonts/coolvetica.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Care around';
+    src: url('/static/fonts/CareAround.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+h1{
+    font-family: 'Spiny Lobster', Verdana;
+    font-size: 6vh;
+}
 .resultado{
     background-color: #E5EDF1;
     border-radius: 10%;
@@ -18,8 +49,13 @@ body {
     margin-top: 5vh;
 }
 
+p{
+    font-size: 3vh;
+}
+
 .result p{
-    font-size: 4vh;
+    font-family: 'Cookies', Verdana;
+    font-size: 6vh;
     margin: 0;
 }
 
@@ -37,8 +73,9 @@ img{
 }
 
 .volver{
+    font-family: 'Cookies', Verdana;
+    font-size: 3vh;
     text-decoration: none;
-    font-size: 1vw;
     color: white;
     background-color: #96C2DB;
     border-radius: 25px;

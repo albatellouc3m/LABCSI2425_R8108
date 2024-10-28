@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <title>{% block title %}My Application{% endblock %}</title>
 
-    <!-- Estilos comunes para todas las páginas -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/base.css') }}">
-
     <!-- Bloque para agregar estilos adicionales específicos de la página -->
     {% block extra_css %}
     {% endblock %}
