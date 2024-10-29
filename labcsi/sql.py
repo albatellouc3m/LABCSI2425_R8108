@@ -41,6 +41,11 @@ def insertar_usuario(username, password, email, name, surname1, surname2, salt):
         return (4, f"Database error: {err}")
 
 
+def get_stored_hash(username):
+    cursor.execute("SELECT password FROM Users WHERE username = %s", (username,))
+    return cursor.fetchone()
+
+
 def obtener_preguntas(name_test):
     try:
         cursor.execute("SELECT question FROM Questions WHERE name_test = %s", (name_test,))
