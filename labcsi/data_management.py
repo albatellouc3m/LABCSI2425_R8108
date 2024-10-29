@@ -19,7 +19,6 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt)
         return (1, "Username already exists")
 
     pswd_hash = hash_password(password)
-    salt = os.urandom(16)
 
     # No encriptamos el username porque se usa en referencias en la base de datos
     # para encriptar los datos de registro usamos encripcion simetrica con la clave del sistema
