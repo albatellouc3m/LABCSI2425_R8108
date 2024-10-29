@@ -19,7 +19,6 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt)
         return (1, "Username already exists")
 
     pswd_hash = hash_password(password)
-    salt = os.urandom(16)
 
     # No encriptamos el username porque se usa en referencias en la base de datos
     # para encriptar los datos de registro usamos encripcion simetrica con la clave del sistema
@@ -36,11 +35,10 @@ def hash_password(password):
 
 # Función para autenticar usuarios con la base de datos
 def autentificar_usuario(username, password):
-    sql.cursor.execute("SELECT password FROM Users WHERE username = %s", (username,))
-    result = sql.cursor.fetchone()
+    stored_hash = sql.get_stored_hash(username)
 
-    if result:
-        stored_hash = result[0]
+    if stored_hash:
+        stored_hash = stored_hash[0]
         if bcrypt.checkpw(password.encode(), stored_hash.encode()):  # Convertir el hash recuperado a bytes
             return (0, "Success")
         else:
