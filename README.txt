@@ -129,11 +129,15 @@ de la pagina web.
 Si ha habido algun error, escribenos que sin base de datos la pagina web no tiene nignun sentido.
 
 
-Para ejecutarlo, hay que poner en la terminal, la ruta al archivo main.py
+Para ejecutarlo, hay que poner en la terminal, la ruta al archivo main.py como por ejemplo en nuestro caso:
     python /home/alba/PycharmProjects/labcsir8108/labcsi/main.py
 
+Y una vez ejecutado, pulsar en el link que sale en la terminal, que te llevará a la pagina web desarrollada
 
 
+AUTORES
+Alba Tello Marcos 100495755
+Jose Javier Moya-Angeler García 100472274
 
 
 
