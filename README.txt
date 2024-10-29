@@ -129,6 +129,11 @@ de la pagina web.
 Si ha habido algun error, escribenos que sin base de datos la pagina web no tiene nignun sentido.
 
 
+Para ejecutarlo, hay que poner en la terminal, la ruta al archivo main.py
+    python /home/alba/PycharmProjects/labcsir8108/labcsi/main.py
+
+
+
 
 
 

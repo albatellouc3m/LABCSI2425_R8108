@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from flask_session import Session
+
 import data_management
 import sql
 
