@@ -6,6 +6,8 @@ from flask_session import Session
 import data_management
 import sql
 
+
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24) # Clave secreta para la session
 # Configuracion de la session almacenada en el servidor
@@ -37,9 +39,14 @@ def register_user():
 
         # El salt que usa cada usuario para generar su clave se mantendra constante haciendo así que su clave sea siempre la misma. Esto resulta util para poder compartirla con sus amigos.
         salt = os.urandom(16)
+        encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
+
+        # Generar par de claves usadas en el proceso de firma
+        private_key, public_key = data_management.generate_user_keys(username, encryption_key)
 
         # Llamar a la función registrar_usuario de data_management.py
-        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt)
+        # The private key will be encripted with the user's derived key
+        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt, public_key, private_key, encryption_key)
 
         if status == 0:
             app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
@@ -106,9 +113,9 @@ def guardar_respuestas():
     respuestas = request.form.getlist('respuestas[]')
 
     # Llamar a la función en data_management.py que guarda las respuestas y calcula el resultado
-    key = session["encryption_key"]
+    encryption_key = session["encryption_key"]
     salt = session["salt"]
-    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key, salt)
+    status, message, result, description = data_management.calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, encryption_key, salt)
 
     if status == 0:
         app.logger.debug(message)

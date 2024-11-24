@@ -24,18 +24,18 @@ def comprobar_existencia_usuario(username):
 
 
 # Función para insertar un usuario en la base de datos
-def insertar_usuario(username, password, email, name, surname1, surname2, salt):
+def insertar_usuario(username, password, email, name, surname1, surname2, salt, public_key, encrypted_private_key):
     sql = """
-        INSERT INTO Users (username, password, email, name, surname1, surname2, salt, reg_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, CURDATE())
+        INSERT INTO Users (username, password, email, name, surname1, surname2, salt, public_key, private_key, reg_date)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURDATE())
     """
 
-    values = (username, password, email, name, surname1, surname2, salt)
+    values = (username, password, email, name, surname1, surname2, salt, public_key, encrypted_private_key)
 
     try:
         cursor.execute(sql, values)  # Ejecutar la consulta con los valores
         db.commit()  # Confirmar los cambios
-        return (0, f"{password}, {email}, {name}, {surname1}, {surname2}")
+        return (0, f"{password}, {email}, {name}, {surname1}, {surname2}, {salt}, {public_key}, {encrypted_private_key}")
     except mysql.connector.Error as err:
         db.rollback()
         return (4, f"Database error: {err}")
@@ -93,14 +93,17 @@ def guardar_respuestas(username, name_test, preguntas, respuestas):
 
 
 def borrar_ultimas_respuestas(username):
-    cursor.execute("""DELETE FROM useranswers
-    WHERE answer_id IN (
-        SELECT answer_id
-        FROM useranswers
-        WHERE username = %s
-        ORDER BY answer_id DESC
-        LIMIT 10
-    );""", (username,))
+    cursor.execute("""DELETE ua
+        FROM useranswers ua
+        JOIN (
+            SELECT answer_id
+            FROM useranswers
+            WHERE username = %s
+            ORDER BY answer_id DESC
+            LIMIT 10
+        ) subquery
+        ON ua.answer_id = subquery.answer_id;
+    """, (username,))
     db.commit()
 
 
@@ -127,7 +130,6 @@ def borrar_ultimo_resultado(username):
         );
     """, (username,))
     db.commit()
-
 
 
 def recuperar_resultado(username, name_test):
@@ -157,12 +159,12 @@ def guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_en
         return (3, f"Error al guardar las respuestas encriptadas: {e}")
 
 
-def guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada):
+def guardar_resultado_encriptado_con_firma(id_resultado, resultado_encriptado, descripcion_encriptada, signature):
     try:
         # Actualizar el resultado encriptado
         cursor.execute(
-            "UPDATE Results SET result = %s, desc_result = %s WHERE result_id = %s",
-            (resultado_encriptado, descripcion_encriptada, id_resultado)
+            "UPDATE Results SET result = %s, desc_result = %s, signature = %s WHERE result_id = %s",
+            (resultado_encriptado, descripcion_encriptada, signature, id_resultado)
         )
         db.commit()
         return (0, "Resultado encriptado guardadas correctamente")
@@ -285,3 +287,13 @@ def obtener_usuarios(username):
         )
     """, (username, username, username))
     return [row[0] for row in cursor.fetchall()]
+
+def obtener_clave_privada(username):
+    try:
+        cursor.execute("SELECT private_key FROM Users WHERE username = %s;", (username,))
+        result = cursor.fetchone()
+        if not result or not result[0]:
+            raise ValueError("Clave privada no encontrada para el usuario")
+        return result[0]  # Return the encrypted private key
+    except Exception as e:
+        return f"fallo al recuperar la clave privada encriptada de la base de datos: {str(e)}"

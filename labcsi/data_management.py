@@ -7,10 +7,13 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
 import sql  # Importar la conexión a la base de datos y el cursor de sql.py
 import base64
+# Firma
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes, serialization
 
 ####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
-def registrar_usuario(username, password, name, surname1, surname2, email, salt):
+def registrar_usuario(username, password, name, surname1, surname2, email, salt, public_key, private_key, encryption_key):
     if username == "":
         return (2, "Username cannot be empty")
     if password == "":
@@ -24,7 +27,11 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt)
     # para encriptar los datos de registro usamos encripcion simetrica con la clave del sistema
     encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos_clave_sistema(name, surname1, surname2, email)
 
-    return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt)
+    # encriptamos la clave privada del usuario con su clave derivada de la contraseña (encryption_key)
+    # la clave publica se puede guardar en claro
+    encrypted_private_key = encriptar_datos_con_clave_derivada(private_key, encryption_key, salt)
+
+    return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt, public_key, encrypted_private_key)
 
 
 def hash_password(password):
@@ -136,19 +143,21 @@ def encriptar_datos_con_clave_derivada(data, key, salt):
 
 # variable is_binary defines whether the data that is encripted is binary, default entry is text. I assume the input to this function will be a string as I mostly encript strings.
 def desencriptar_datos_con_clave_derivada(encrypted_data, key, is_binary=False):
-    encrypted_data = base64.b64decode(encrypted_data.encode('utf-8'))
+    try:
+        encrypted_data = base64.b64decode(encrypted_data.encode('utf-8'))
 
-    nonce = encrypted_data[16:28]
-    ciphertext = encrypted_data[28:]
+        nonce = encrypted_data[16:28]
+        ciphertext = encrypted_data[28:]
 
-    # Descifrar los datos con AES-GCM
-    aesgcm = AESGCM(key)
-    plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+        # Descifrar los datos con AES-GCM
+        aesgcm = AESGCM(key)
+        plaintext = aesgcm.decrypt(nonce, ciphertext, None)
 
-    if is_binary:
-        return plaintext
-    return plaintext.decode('utf-8')
-
+        if is_binary:
+            return plaintext
+        return plaintext.decode('utf-8')
+    except Exception as e:
+        return f"Error al desencriptar datos {encrypted_data} con clave derivada: {e}"
 
 def encriptar_respuestas(respuestas, resultado, description, key, salt):
     # Encriptar las respuestas utilizando la clave derivada de la contraseña
@@ -166,7 +175,7 @@ def encriptar_respuestas(respuestas, resultado, description, key, salt):
 
 ####MANEJO DE DATOS######
 # Función para guardar respuestas y calcular el resultado encriptado
-def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key, salt):
+def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, encryption_key, salt):
     # Primero, guardar las respuestas del usuario llamando a guardar_respuestas
     status, message = sql.guardar_respuestas(username, name_test, preguntas, respuestas)
     if status != 0:
@@ -187,7 +196,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key
 
     # Encriptar las respuestas y el resultado
     try:
-        respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, key, salt)
+        respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, encryption_key, salt)
     except Exception as e:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
         sql.borrar_ultimas_respuestas(username)
@@ -202,14 +211,31 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, key
         sql.borrar_ultimo_resultado(username)
         return status, message, None, None
 
-    status, message = sql.guardar_resultado_encriptado(id_resultado, resultado_encriptado, descripcion_encriptada)
+    # Generar la firma digital
+    data_to_sign = f"{resultado_encriptado}:{descripcion_encriptada}"
+    try:
+        encrypted_private_key_pem = sql.obtener_clave_privada(username)
+        private_key_pem = desencriptar_datos_con_clave_derivada(encrypted_private_key_pem, encryption_key)
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode(),  # Ensure the PEM string is in bytes
+            password=None,  # Provide the password if the key is encrypted
+            backend=default_backend()
+        )
+        signature = sign_data(private_key, data_to_sign)
+    except Exception as e:
+        sql.borrar_ultimas_respuestas(username)
+        sql.borrar_ultimo_resultado(username)
+
+        return 1, f"fallo al firmar el resultado: {e}", None, None
+
+    status, message = sql.guardar_resultado_encriptado_con_firma(id_resultado, resultado_encriptado, descripcion_encriptada, signature)
     if status != 0:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
         sql.borrar_ultimas_respuestas(username)
         sql.borrar_ultimo_resultado(username)
         return status, message, None, None
 
-    return 0, f"Respuestas guardadas y resultado calculado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes\nRespuestas Encriptadas: {respuestas_encriptadas}\nResultado Encriptado: {resultado_encriptado}\nDescripcion Encriptada {descripcion_encriptada}", resultado, description
+    return 0, f"Respuestas guardadas y resultado calculado y firmado correctamente\nAlgoritmo: AES-GCM | Longitud de clave: 32 bytes\nRespuestas Encriptadas: {respuestas_encriptadas}\nResultado Encriptado: {resultado_encriptado}\nDescripcion Encriptada {descripcion_encriptada}", resultado, description
 
 
 
@@ -245,3 +271,37 @@ def crear_amistad(username, friend, key, salt):
     # Encriptamos la clave del solicitante (friend) con la clave del que acepta la solicitud (username)
     friend_encripted_key = encriptar_datos_con_clave_derivada(friend_key, key, salt)
     sql.grabar_amistad(username, friend, username_encripted_key, friend_encripted_key)
+
+####Firma######
+def generate_user_keys(username, key):
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend()
+    )
+    public_key = private_key.public_key()
+
+    # Hay que serializarlas
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    # Serialize public key to PEM format
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+
+    return private_key_pem, public_key_pem
+
+def sign_data(private_key, data):
+    return private_key.sign(
+        data.encode(),
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
