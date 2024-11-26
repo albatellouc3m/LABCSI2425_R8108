@@ -212,7 +212,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
         return status, message, None, None
 
     # Generar la firma digital
-    data_to_sign = f"{resultado_encriptado}:{descripcion_encriptada}"
+    data_to_sign = f"{resultado}:{description}"
     try:
         encrypted_private_key_pem = sql.obtener_clave_privada(username)
         private_key_pem = desencriptar_datos_con_clave_derivada(encrypted_private_key_pem, encryption_key)
