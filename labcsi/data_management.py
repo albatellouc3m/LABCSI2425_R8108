@@ -10,6 +10,7 @@ import base64
 # Firma
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.exceptions import InvalidSignature
 
 ####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
@@ -242,11 +243,17 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
 # Obtener los resultados de los tests del usuario
 def obtener_resultados_usuario(username, key):
     try:
-        resultados_desencriptados = [(r[0],desencriptar_datos_con_clave_derivada(r[1], key),desencriptar_datos_con_clave_derivada(r[2], key),r[3]) for r in sql.recuperar_resultados_usuario(username)]
+        resultados_desencriptados = [
+            (r[1],  # name_test
+             desencriptar_datos_con_clave_derivada(r[2], key),  # result desencriptado
+             desencriptar_datos_con_clave_derivada(r[3], key),  # desc_result desencriptado
+             r[4],  # date_result
+             r[0])  # result_id
+            for r in sql.recuperar_resultados_usuario(username)
+        ]
         return resultados_desencriptados
     except Exception as e:
         return f"Error al obtener los resultados: {str(e)}"
-
 
 # Obtener las respuestas del usuario para un test específico
 def obtener_respuestas_usuario(username, name_test, key):
@@ -305,3 +312,36 @@ def sign_data(private_key, data):
         ),
         hashes.SHA256()
     )
+
+def verificar_firma(public_key_pem, message, signature):
+    """
+    Verifica la firma digital usando la clave pública.
+
+    :param public_key_pem: Clave pública en formato PEM.
+    :param message: Mensaje firmado (string o bytes).
+    :param signature: Firma digital en bytes.
+    :return: True si la firma es válida, False en caso contrario.
+    """
+    try:
+        # Cargar la clave pública desde el formato PEM
+        public_key = serialization.load_pem_public_key(
+            public_key_pem.encode() if isinstance(public_key_pem, str) else public_key_pem
+        )
+
+        # Verificar la firma
+        public_key.verify(
+            signature,
+            message.encode() if isinstance(message, str) else message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return True  # La firma es válida
+    except InvalidSignature:
+        print("Firma no válida")
+        return False  # La firma no es válida
+    except Exception as e:
+        print(f"Error al verificar la firma: {e}")
+        return False

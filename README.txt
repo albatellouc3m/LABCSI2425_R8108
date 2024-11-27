@@ -62,7 +62,7 @@ Estos son los pasos que hay que seguir para poder conectar el archivo a la base 
                 mysql -u root -p
 
             Después, conectate a la base de datos donde has cargado todas las tablas antes:
-                USE LABCSI2425_R8108_db2
+                USE LABCSI2425_R8108_db
 
             Y ahi dentro pon los siguientes comandos
                 SHOW TABLES;
@@ -81,7 +81,7 @@ Estos son los pasos que hay que seguir para poder conectar el archivo a la base 
                 +--------------------------------+
                 7 rows in set (0,02 sec)
 
-                SELECT * FROM Tests;
+                SELECT * FROM Test;
                 +---------------------------+--------------------------------------------------------------------------+------------+
                 | name_test                 | description                                                              | date       |
                 +---------------------------+--------------------------------------------------------------------------+------------+
@@ -94,7 +94,7 @@ Estos son los pasos que hay que seguir para poder conectar el archivo a la base 
                 +---------------------------+--------------------------------------------------------------------------+------------+
                 6 rows in set (0,00 sec)
 
-                SHOW PROCEDURE STATUS WHERE Db = 'LABCSI2425_R8108_db2';
+                SHOW PROCEDURE STATUS WHERE Db = 'LABCSI2425_R8108_db';
                 +--------+-------------------------+-----------+----------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+
                 | Db     | Name                    | Type      | Definer        | Modified            | Created             | Security_type | Comment | character_set_client | collation_connection | Database Collation |
                 +--------+-------------------------+-----------+----------------+---------------------+---------------------+---------------+---------+----------------------+----------------------+--------------------+

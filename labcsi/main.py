@@ -141,18 +141,34 @@ def perfil():
 
     username = session["username"]
     key = session["encryption_key"]
+
+    # Recuperar resultados del usuario
     resultados = data_management.obtener_resultados_usuario(username, key)
     if isinstance(resultados, str):
         app.logger.debug(resultados)
         return redirect("/")
 
+    # Verificar la firma de cada resultado
+    public_key_pem = sql.obtener_clave_publica(username)
+    for resultado in resultados:
+        name_test, result, description, date_result, result_id = resultado
+        data_to_sign = f"{result}:{description}"
+        signature = sql.obtener_firma_resultado(result_id)
+
+        es_valida = data_management.verificar_firma(public_key_pem, data_to_sign, signature)
+        if not es_valida:
+            app.logger.debug(f"Firma NO válida para el test {name_test}")
+            return redirect("/login")  # Opcional: Manejo de firmas inválidas
+
+    app.logger.debug("Todas las firmas del usuario son válidas")
+
+    # Recuperar amigos y solicitudes
     amigos = sql.ver_amigos([username])
     if isinstance(amigos, str):
         app.logger.debug(amigos)
         return redirect("/")
 
     solicitudes = sql.ver_solicitudes([username])
-
     if isinstance(solicitudes, str):
         app.logger.debug(solicitudes)
         return redirect("/")
@@ -252,10 +268,10 @@ def delete_result():
     # Eliminar las respuestas y el resultado del test
     try:
         # Primero eliminar las respuestas del usuario para el test
-        sql.cursor.execute("DELETE FROM UserAnswers WHERE username = %s AND name_test = %s", (username, test_name))
+        sql.cursor.execute("DELETE FROM useranswers WHERE username = %s AND name_test = %s", (username, test_name))
 
         # Luego eliminar el resultado del test
-        sql.cursor.execute("DELETE FROM Results WHERE username = %s AND name_test = %s", (username, test_name))
+        sql.cursor.execute("DELETE FROM results WHERE username = %s AND name_test = %s", (username, test_name))
 
         sql.db.commit()  # Confirmar los cambios
         app.logger.debug("Resultado y respuestas del test eliminados correctamente", "success")
