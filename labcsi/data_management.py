@@ -11,6 +11,9 @@ import base64
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.exceptions import InvalidSignature
+from cryptography.x509 import NameOID
+from cryptography import x509
+import datetime
 
 ####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
@@ -345,3 +348,33 @@ def verificar_firma(public_key_pem, message, signature):
     except Exception as e:
         print(f"Error al verificar la firma: {e}")
         return False
+
+# PKI
+def generate_and_save_csr(private_key_pem, username, output_folder="./Certificacion/AC/solicitudes"):
+    # Load the private key
+    private_key = serialization.load_pem_private_key(
+        private_key_pem, password=None, backend=default_backend()
+    )
+
+    # Define the subject of the certificate
+    subject = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, username),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "UC3M"),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+    ])
+
+    # Build the CSR
+    csr = x509.CertificateSigningRequestBuilder().subject_name(
+        subject
+    ).sign(private_key, hashes.SHA256(), default_backend())
+
+    # Save the CSR to the specified folder
+    csr_path = os.path.join(output_folder, f"{username}_req.pem")
+    with open(csr_path, "wb") as csr_file:
+        csr_file.write(csr.public_bytes(serialization.Encoding.PEM))
+
+def cargar_certificado(username):
+    path_certificado = f"./Certificacion/AC/nuevoscerts /{username}_cert.pem"
+    with open(path_certificado, "rb") as cert_file:
+        cert = cert_file.read()
+    return cert.decode("utf-8")

@@ -44,6 +44,10 @@ def register_user():
         # Generar par de claves usadas en el proceso de firma
         private_key, public_key = data_management.generate_user_keys(username, encryption_key)
 
+        # Crear CSR
+        data_management.generate_and_save_csr(private_key, username)
+        app.logger.debug(f"CSR guardado para {username}")
+
         # Llamar a la función registrar_usuario de data_management.py
         # The private key will be encripted with the user's derived key
         status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt, public_key, private_key, encryption_key)
