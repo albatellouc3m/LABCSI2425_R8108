@@ -50,7 +50,7 @@ def register_user():
 
         # Llamar a la función registrar_usuario de data_management.py
         # The private key will be encripted with the user's derived key
-        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt, public_key, private_key, encryption_key)
+        status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt, private_key, encryption_key)
 
         if status == 0:
             app.logger.debug(f"Registro exitoso\nAlgoritmo: AES-CBC | Longitud de clave: {len(data_management.cargar_clave())}")
@@ -77,6 +77,10 @@ def login():
             session["salt"] = salt
             encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
             session["encryption_key"] = encryption_key
+
+            # Cargar Certificado
+            mensaje = data_management.cargar_certificado(username)
+            app.logger.debug(mensaje)
 
             app.logger.debug("Inicio de sesión exitoso")
             return redirect(url_for("home"))  # Redirigir a la página de inicio
@@ -152,14 +156,27 @@ def perfil():
         app.logger.debug(resultados)
         return redirect("/")
 
+    # Cargar el certificado de AC
+    try:
+        with open("./Certificacion/AC/ac1cert.pem", "r") as ca_cert_file:
+            ca_cert_pem = ca_cert_file.read()
+    except FileNotFoundError:
+        app.logger.error("El certificado de la AC no se encontró.")
+        return redirect("/")
+
+    # Recuperar el certificado del usuario desde la base de datos
+    user_cert_pem = sql.obtener_certificado_usuario(username)  # Implement this in `sql.py`
+    if not user_cert_pem:
+        app.logger.error(f"No se encontró el certificado para el usuario {username}.")
+        return redirect("/")
+
     # Verificar la firma de cada resultado
-    public_key_pem = sql.obtener_clave_publica(username)
     for resultado in resultados:
         name_test, result, description, date_result, result_id = resultado
         data_to_sign = f"{result}:{description}"
         signature = sql.obtener_firma_resultado(result_id)
 
-        es_valida = data_management.verificar_firma(public_key_pem, data_to_sign, signature)
+        es_valida = data_management.verificar_firma(user_cert_pem, ca_cert_pem, data_to_sign, signature)
         if not es_valida:
             app.logger.debug(f"Firma NO válida para el test {name_test}")
             return redirect("/login")  # Opcional: Manejo de firmas inválidas

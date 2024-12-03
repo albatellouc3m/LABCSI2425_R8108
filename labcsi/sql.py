@@ -24,18 +24,18 @@ def comprobar_existencia_usuario(username):
 
 
 # Función para insertar un usuario en la base de datos
-def insertar_usuario(username, password, email, name, surname1, surname2, salt, public_key, encrypted_private_key):
+def insertar_usuario(username, password, email, name, surname1, surname2, salt, encrypted_private_key):
     sql = """
-        INSERT INTO users (username, password, email, name, surname1, surname2, salt, public_key, private_key, reg_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURDATE())
+        INSERT INTO users (username, password, email, name, surname1, surname2, salt, private_key, reg_date)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURDATE())
     """
 
-    values = (username, password, email, name, surname1, surname2, salt, public_key, encrypted_private_key)
+    values = (username, password, email, name, surname1, surname2, salt, encrypted_private_key)
 
     try:
         cursor.execute(sql, values)  # Ejecutar la consulta con los valores
         db.commit()  # Confirmar los cambios
-        return (0, f"{password}, {email}, {name}, {surname1}, {surname2}, {salt}, {public_key}, {encrypted_private_key}")
+        return (0, f"{password}, {email}, {name}, {surname1}, {surname2}, {salt}, {encrypted_private_key}")
     except mysql.connector.Error as err:
         db.rollback()
         return (4, f"Database error: {err}")
@@ -319,3 +319,16 @@ def obtener_firma_resultado(id_resultado):
         return result[0]  # Firma en formato bytes
     else:
         raise ValueError("Firma no encontrada para el resultado")
+
+#PKI
+def insertar_certificado_usuario(username, cert):
+    cursor.execute(
+        "UPDATE users SET certificate = %s WHERE username = %s",
+        (cert, username)
+    )
+    db.commit()
+
+def obtener_certificado_usuario(username):
+    cursor.execute("SELECT certificate FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+    return result[0] if result else None

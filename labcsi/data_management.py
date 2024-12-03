@@ -11,13 +11,13 @@ import base64
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.exceptions import InvalidSignature
-from cryptography.x509 import NameOID
+from cryptography.x509 import NameOID, load_pem_x509_certificate
 from cryptography import x509
 import datetime
 
 ####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
-def registrar_usuario(username, password, name, surname1, surname2, email, salt, public_key, private_key, encryption_key):
+def registrar_usuario(username, password, name, surname1, surname2, email, salt, private_key, encryption_key):
     if username == "":
         return (2, "Username cannot be empty")
     if password == "":
@@ -32,10 +32,9 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt,
     encrypted_name, encrypted_surname1, encrypted_surname2, encrypted_email = encriptar_datos_clave_sistema(name, surname1, surname2, email)
 
     # encriptamos la clave privada del usuario con su clave derivada de la contraseña (encryption_key)
-    # la clave publica se puede guardar en claro
     encrypted_private_key = encriptar_datos_con_clave_derivada(private_key, encryption_key, salt)
 
-    return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt, public_key, encrypted_private_key)
+    return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt, encrypted_private_key)
 
 
 def hash_password(password):
@@ -316,7 +315,7 @@ def sign_data(private_key, data):
         hashes.SHA256()
     )
 
-def verificar_firma(public_key_pem, message, signature):
+def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
     """
     Verifica la firma digital usando la clave pública.
 
@@ -326,21 +325,29 @@ def verificar_firma(public_key_pem, message, signature):
     :return: True si la firma es válida, False en caso contrario.
     """
     try:
-        # Cargar la clave pública desde el formato PEM
-        public_key = serialization.load_pem_public_key(
-            public_key_pem.encode() if isinstance(public_key_pem, str) else public_key_pem
+        user_cert = load_pem_x509_certificate(user_cert_pem.encode(), default_backend())
+        ca_cert = load_pem_x509_certificate(ca_cert_pem.encode(), default_backend())
+
+        ca_public_key = ca_cert.public_key()
+        # Verificar la firma
+        ca_public_key.verify(
+            user_cert.signature,  # The signature on the user's certificate
+            user_cert.tbs_certificate_bytes,  # The data that was signed (certificate contents)
+            padding.PKCS1v15(),  # The padding used during signing (for RSA CA keys)
+            user_cert.signature_hash_algorithm  # The hash algorithm used (e.g., SHA256)
         )
 
-        # Verificar la firma
-        public_key.verify(
-            signature,
-            message.encode() if isinstance(message, str) else message,
+        user_public_key = user_cert.public_key()
+        user_public_key.verify(
+            signature,  # The signature to verify
+            message.encode(),  # The original message
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
+                mgf=padding.MGF1(hashes.SHA256()),  # Padding used for the signature
                 salt_length=padding.PSS.MAX_LENGTH
             ),
-            hashes.SHA256()
+            hashes.SHA256()  # Hash algorithm used
         )
+
         return True  # La firma es válida
     except InvalidSignature:
         print("Firma no válida")
@@ -374,7 +381,15 @@ def generate_and_save_csr(private_key_pem, username, output_folder="./Certificac
         csr_file.write(csr.public_bytes(serialization.Encoding.PEM))
 
 def cargar_certificado(username):
-    path_certificado = f"./Certificacion/AC/nuevoscerts /{username}_cert.pem"
-    with open(path_certificado, "rb") as cert_file:
-        cert = cert_file.read()
-    return cert.decode("utf-8")
+    try:
+        path_certificado = f"./Certificacion/AC/nuevoscerts_por_usuario/{username}_cert.pem"
+        with open(path_certificado, "rb") as cert_file:
+            cert = cert_file.read().decode("utf-8")
+        sql.insertar_certificado_usuario(username, cert)
+        #Borrar archivo despues de haberlo procesado
+        os.remove(path_certificado)
+        return f"certificado de {username} insertado correctamente en la base de datos"
+    except FileNotFoundError:
+        f"certificado de {username} ya estaba presente en la base de datos"
+    except Exception as e:
+        return f"Error procesando el certificado de {username}: {e}"
