@@ -22,7 +22,6 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
 Session(app)  # Usamos Flask-Session para guardar la session en el lado del servidor
 
-# TODO: mejoras: Rotar clave de encripcion. Cada x tiempo desencriptar y volver a encriptar los datos cambiando el salt a la hora de generar la clave
 # TODO: mejoras: Captura de excepciones (de forma sistemática y con su listado de excepciones) ya tenemos app.loger.debug, solamente hay que llamar a algo que de un listado de excepciones al finalizar
 @app.route("/")
 def home():
@@ -57,7 +56,9 @@ def register_user():
         print(f"DEBUG: encryption_key={encryption_key}, type={type(encryption_key)}")
 
         # Crear CSR
-        data_management.generate_and_save_csr(private_key, username, "/home/alba/PycharmProjects/LABCSI/labcsi/Certificacion/AC/solicitudes")
+        solicitudes_dir = os.path.join(os.environ["AC_DIR"], "solicitudes")
+
+        data_management.generate_and_save_csr(private_key, username, solicitudes_dir)
         app.logger.debug(f"CSR guardado para {username}")
 
         # Llamar a la función registrar_usuario de data_management.py

@@ -328,28 +328,34 @@ def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
     :return: True si la firma es válida, False en caso contrario.
     """
     try:
+        # Cargar el certificado del usuario y de la AC
         user_cert = load_pem_x509_certificate(user_cert_pem.encode(), default_backend())
         ca_cert = load_pem_x509_certificate(ca_cert_pem.encode(), default_backend())
 
+        # Obtener la clave pública de la AC
         ca_public_key = ca_cert.public_key()
-        # Verificar la firma
+
+        # Verificar la firma del certificado del usuario usando la clave pública de la CA
         ca_public_key.verify(
-            user_cert.signature,  # The signature on the user's certificate
-            user_cert.tbs_certificate_bytes,  # The data that was signed (certificate contents)
-            padding.PKCS1v15(),  # The padding used during signing (for RSA CA keys)
-            user_cert.signature_hash_algorithm  # The hash algorithm used (e.g., SHA256)
+            user_cert.signature, # La firma en el certificado del usuario
+            user_cert.tbs_certificate_bytes, # Los bytes del certificado que se firmaron (contenido del certificado)
+            padding.PKCS1v15(),  # Relleno para la firma RSA
+            user_cert.signature_hash_algorithm  # Algoritmo hash utilizado para la firma
         )
 
+        # Si la verificación anterior fue exitosa, continuamos
+        # Obtener la clave pública del usuario del certificado
         user_public_key = user_cert.public_key()
 
+        # Verificar la firma del mensaje utilizando la clave pública del usuario
         user_public_key.verify(
-            signature,  # The signature to verify
-            message.encode(),  # The original message
+            signature,  # La firma a verificar
+            message.encode(),   # El mensaje original que se firmó
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),  # Padding used for the signature
+                mgf=padding.MGF1(hashes.SHA256()),  # Relleno utilizado en la firma
                 salt_length=padding.PSS.MAX_LENGTH
             ),
-            hashes.SHA256()  # Hash algorithm used
+            hashes.SHA256()  # Algoritmo hash utilizado para la firma
         )
 
         return True  # La firma es válida
@@ -361,8 +367,8 @@ def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
         return False
 
 # PKI
-def generate_and_save_csr(private_key_pem, username, output_folder="/home/alba/PycharmProjects/LABCSI/labcsi/Certificacion/AC/solicitudes"):
-    # Load the private key
+def generate_and_save_csr(private_key_pem, username, output_folder):
+    # Cargar la private key
     if isinstance(private_key_pem, str):
         private_key_pem = private_key_pem.encode('utf-8')
 
@@ -370,22 +376,19 @@ def generate_and_save_csr(private_key_pem, username, output_folder="/home/alba/P
         private_key_pem, password=None, backend=default_backend()
     )
 
-    # Define the subject of the certificate
+    # Definir el sujeto del Certificado
     subject = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, username),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "UC3M"),
         x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
     ])
 
-    # Build the CSR
+    # construir la CSR
     csr = x509.CertificateSigningRequestBuilder().subject_name(
         subject
     ).sign(private_key, hashes.SHA256(), default_backend())
 
-    print(f"DEBUG: output_folder type: {type(output_folder)}, value: {output_folder}")
-    print(f"DEBUG: username type: {type(username)}, value: {username}")
-
-    # Save the CSR to the specified folder
+    # Guardar la CSR en solicitudes
     csr_path = os.path.join(output_folder, f"{username}_req.pem")
     with open(csr_path, "wb") as csr_file:
         csr_file.write(csr.public_bytes(serialization.Encoding.PEM))
