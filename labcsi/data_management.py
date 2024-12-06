@@ -306,7 +306,8 @@ def generate_user_keys(username, key):
     return private_key_pem, public_key_pem
 
 def sign_data(private_key, data):
-    return private_key.sign(
+    print(f"DEBUG: Datos a firmar: {data}")
+    signature = private_key.sign(
         data.encode(),
         padding.PSS(
             mgf=padding.MGF1(hashes.SHA256()),
@@ -314,6 +315,8 @@ def sign_data(private_key, data):
         ),
         hashes.SHA256()
     )
+    print(f"DEBUG: Firma generada: {signature}")
+    return signature
 
 def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
     """
@@ -338,6 +341,7 @@ def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
         )
 
         user_public_key = user_cert.public_key()
+
         user_public_key.verify(
             signature,  # The signature to verify
             message.encode(),  # The original message
@@ -357,8 +361,11 @@ def verificar_firma(user_cert_pem, ca_cert_pem, message, signature):
         return False
 
 # PKI
-def generate_and_save_csr(private_key_pem, username, output_folder="./Certificacion/AC/solicitudes"):
+def generate_and_save_csr(private_key_pem, username, output_folder="/home/alba/PycharmProjects/LABCSI/labcsi/Certificacion/AC/solicitudes"):
     # Load the private key
+    if isinstance(private_key_pem, str):
+        private_key_pem = private_key_pem.encode('utf-8')
+
     private_key = serialization.load_pem_private_key(
         private_key_pem, password=None, backend=default_backend()
     )
@@ -375,10 +382,14 @@ def generate_and_save_csr(private_key_pem, username, output_folder="./Certificac
         subject
     ).sign(private_key, hashes.SHA256(), default_backend())
 
+    print(f"DEBUG: output_folder type: {type(output_folder)}, value: {output_folder}")
+    print(f"DEBUG: username type: {type(username)}, value: {username}")
+
     # Save the CSR to the specified folder
     csr_path = os.path.join(output_folder, f"{username}_req.pem")
     with open(csr_path, "wb") as csr_file:
         csr_file.write(csr.public_bytes(serialization.Encoding.PEM))
+
 
 def cargar_certificado(username):
     try:

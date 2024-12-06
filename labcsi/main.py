@@ -2,11 +2,18 @@ import os
 
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from flask_session import Session
+import subprocess
 
 import data_management
 import sql
 
+# Ruta base del proyecto
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AC_DIR = os.path.join(BASE_DIR, "Certificacion", "AC")
 
+# Configurar variables de entorno
+os.environ["BASE_DIR"] = BASE_DIR
+os.environ["AC_DIR"] = AC_DIR
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24) # Clave secreta para la session
@@ -44,8 +51,13 @@ def register_user():
         # Generar par de claves usadas en el proceso de firma
         private_key, public_key = data_management.generate_user_keys(username, encryption_key)
 
+        print(f"DEBUG: private_key_pem: {private_key.decode()}")
+
+        print(f"DEBUG: username={username}, type={type(username)}")
+        print(f"DEBUG: encryption_key={encryption_key}, type={type(encryption_key)}")
+
         # Crear CSR
-        data_management.generate_and_save_csr(private_key, username)
+        data_management.generate_and_save_csr(private_key, username, "/home/alba/PycharmProjects/LABCSI/labcsi/Certificacion/AC/solicitudes")
         app.logger.debug(f"CSR guardado para {username}")
 
         # Llamar a la función registrar_usuario de data_management.py
@@ -141,6 +153,7 @@ def logout():
     return redirect(url_for("home"))
 
 
+
 @app.route("/perfil")
 def perfil():
     if "username" not in session:
@@ -158,22 +171,53 @@ def perfil():
 
     # Cargar el certificado de AC
     try:
-        with open("./Certificacion/AC/ac1cert.pem", "r") as ca_cert_file:
+        ac_cert_path = os.path.join(os.environ["AC_DIR"], "ac1cert.pem")
+        with open(ac_cert_path, "r") as ca_cert_file:
             ca_cert_pem = ca_cert_file.read()
     except FileNotFoundError:
         app.logger.error("El certificado de la AC no se encontró.")
         return redirect("/")
 
-    # Recuperar el certificado del usuario desde la base de datos
-    user_cert_pem = sql.obtener_certificado_usuario(username)  # Implement this in `sql.py`
+    # Verificar si el usuario ya tiene un certificado
+    user_cert_pem = sql.obtener_certificado_usuario(username)
     if not user_cert_pem:
-        app.logger.error(f"No se encontró el certificado para el usuario {username}.")
-        return redirect("/")
+        # Ruta al CSR que ya se había generado antes
+        csr_path = os.path.join(os.environ["AC_DIR"], "solicitudes", f"{username}_req.pem")
+
+        # Crear carpeta para el usuario
+        user_cert_folder = os.path.join(os.environ["AC_DIR"], "..", username)  # Subir un nivel desde AC
+        os.makedirs(user_cert_folder, exist_ok=True)
+
+        # Generar certificado con OpenSSL
+        openssl_config_path = os.path.join(os.environ["AC_DIR"], "openssl_AC1.cnf")
+        if not os.path.exists(openssl_config_path):
+            app.logger.error(f"El archivo de configuración OpenSSL no se encontró en: {openssl_config_path}")
+            return redirect("/")
+
+        # Automáticamente proporcionar entrada para crear el certificado
+        texto = "certificado"
+        command = [
+            "openssl", "ca", "-batch",
+            "-in", csr_path,
+            "-notext",
+            "-config", openssl_config_path,
+            "-out", os.path.join(user_cert_folder, f"{username}_cert.pem"),
+            "-passin", "stdin"
+        ]
+
+        subprocess.run(command, input=texto.encode(), check=True)
+
+        # Leer y guardar el certificado generado
+        user_cert_path = os.path.join(user_cert_folder, f"{username}_cert.pem")
+        with open(user_cert_path, "r") as cert_file:
+            user_cert_pem = cert_file.read()
+            sql.insertar_certificado_usuario(username, user_cert_pem)
 
     # Verificar la firma de cada resultado
     for resultado in resultados:
         name_test, result, description, date_result, result_id = resultado
         data_to_sign = f"{result}:{description}"
+
         signature = sql.obtener_firma_resultado(result_id)
 
         es_valida = data_management.verificar_firma(user_cert_pem, ca_cert_pem, data_to_sign, signature)
@@ -242,6 +286,31 @@ def ver_perfil_amigo(friend):
     key_amigo_encriptada = sql.coger_key_amigo(username, friend)
     key_amigo_desencriptada = data_management.desencriptar_datos_con_clave_derivada(key_amigo_encriptada, key, True)
     resultados_amigo = data_management.obtener_resultados_usuario(friend, key_amigo_desencriptada)
+
+    # Cargar el certificado de AC
+    try:
+        with open("./Certificacion/AC/ac1cert.pem", "r") as ca_cert_file:
+            ca_cert_pem = ca_cert_file.read()
+    except FileNotFoundError:
+        app.logger.error("El certificado de la AC no se encontró.")
+        return redirect("/")
+
+    # Verificar si el amigo ya tiene un certificado
+    friend_cert_pem = sql.obtener_certificado_usuario(friend)
+
+    # Verificar la firma de cada resultado del amigo
+    for resultado in resultados_amigo:
+        name_test, result, description, date_result, result_id = resultado
+        data_to_sign = f"{result}:{description}"
+        signature = sql.obtener_firma_resultado(result_id)
+
+        es_valida = data_management.verificar_firma(friend_cert_pem, ca_cert_pem, data_to_sign, signature)
+        if not es_valida:
+            app.logger.debug(f"Firma NO válida para el test {name_test} del amigo {friend}")
+            return redirect("/")  # Opcional: Manejo de firmas inválidas
+
+    app.logger.debug("Todas las firmas del amigo son válidas")
+
     if isinstance(resultados_amigo, str):
         app.logger.debug(resultados_amigo)
         return redirect("/")
