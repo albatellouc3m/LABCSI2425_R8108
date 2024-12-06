@@ -205,7 +205,7 @@ def perfil():
             "-out", os.path.join(user_cert_folder, f"{username}_cert.pem"),
             "-passin", "stdin"
         ]
-
+        app.logger.debug("La AC va a proceder a generar el certificado del usuario.")
         subprocess.run(command, input=texto.encode(), check=True)
 
         # Leer y guardar el certificado generado
