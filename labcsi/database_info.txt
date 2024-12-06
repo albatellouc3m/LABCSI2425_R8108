@@ -1,4 +1,0 @@
-user=root
-password=JoseJavi001924
-host=127.0.0.1
-database=LABCSI2425_R8108_db
