@@ -2,18 +2,11 @@ import os
 
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 from flask_session import Session
-import subprocess
+
 
 import data_management
 import sql
 
-# Ruta base del proyecto
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-AC_DIR = os.path.join(BASE_DIR, "Certificacion", "AC")
-
-# Configurar variables de entorno
-os.environ["BASE_DIR"] = BASE_DIR
-os.environ["AC_DIR"] = AC_DIR
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24) # Clave secreta para la session
@@ -61,8 +54,9 @@ def register_user():
         data_management.generate_and_save_csr(private_key, username, solicitudes_dir)
         app.logger.debug(f"CSR guardado para {username}")
 
-        # Llamar a la función registrar_usuario de data_management.py
-        # The private key will be encripted with the user's derived key
+        # Llamar a la función registrar_usuario de data_management.py encargada de hashear la contraseña, encriptar los datos relevantes y guardarlos en la base de datos
+        # La clave privada sera encriptada con la clave derivada de la contraseña del usuario
+        # La clave publica, almacenada dentro del certificado, sera añadida a la base de datos cuando la AC haya aprobado su certificado. De momento el campo del certificado en la tabla users de la base de datos sera null.
         status, message = data_management.registrar_usuario(username, password, name, surname1, surname2, email, salt, private_key, encryption_key)
 
         if status == 0:
@@ -90,10 +84,6 @@ def login():
             session["salt"] = salt
             encryption_key, _ = data_management.generar_clave_desde_contraseña(password, salt)
             session["encryption_key"] = encryption_key
-
-            # Cargar Certificado
-            mensaje = data_management.cargar_certificado(username)
-            app.logger.debug(mensaje)
 
             app.logger.debug("Inicio de sesión exitoso")
             return redirect(url_for("home"))  # Redirigir a la página de inicio
@@ -170,49 +160,22 @@ def perfil():
         app.logger.debug(resultados)
         return redirect("/")
 
-    # Cargar el certificado de AC
-    try:
-        ac_cert_path = os.path.join(os.environ["AC_DIR"], "ac1cert.pem")
-        with open(ac_cert_path, "r") as ca_cert_file:
-            ca_cert_pem = ca_cert_file.read()
-    except FileNotFoundError:
-        app.logger.error("El certificado de la AC no se encontró.")
+    # Cargar el certificado de AC y del usuario
+    # El certificado del usuario sera emitido por la AC en caso de no existir
+    code, mensaje, user_cert_pem, ca_cert_pem = data_management.cargar_certificado(username)
+    app.logger.debug(mensaje)
+    if code == 1:
         return redirect("/")
 
-    # Verificar si el usuario ya tiene un certificado
-    user_cert_pem = sql.obtener_certificado_usuario(username)
-    if not user_cert_pem:
-        # Ruta al CSR que ya se había generado antes
-        csr_path = os.path.join(os.environ["AC_DIR"], "solicitudes", f"{username}_req.pem")
-
-        # Crear carpeta para el usuario
-        user_cert_folder = os.path.join(os.environ["AC_DIR"], "..", username)  # Subir un nivel desde AC
-        os.makedirs(user_cert_folder, exist_ok=True)
-
-        # Generar certificado con OpenSSL
-        openssl_config_path = os.path.join(os.environ["AC_DIR"], "openssl_AC1.cnf")
-        if not os.path.exists(openssl_config_path):
-            app.logger.error(f"El archivo de configuración OpenSSL no se encontró en: {openssl_config_path}")
+    # Verificar si el usuario ya tiene un certificado o hay que emitirlo
+    if not user_cert_pem: # Emitir el certificado
+        app.logger.debug("El usuario no cuenta con un certificado")
+        code, mensaje, user_cert_pem = data_management.emitir_certificado(username)
+        if code == 1:
+            app.logger.error(mensaje)
             return redirect("/")
+        app.logger.debug(mensaje)
 
-        # Automáticamente proporcionar entrada para crear el certificado
-        texto = "certificado"
-        command = [
-            "openssl", "ca", "-batch",
-            "-in", csr_path,
-            "-notext",
-            "-config", openssl_config_path,
-            "-out", os.path.join(user_cert_folder, f"{username}_cert.pem"),
-            "-passin", "stdin"
-        ]
-        app.logger.debug("La AC va a proceder a generar el certificado del usuario.")
-        subprocess.run(command, input=texto.encode(), check=True)
-
-        # Leer y guardar el certificado generado
-        user_cert_path = os.path.join(user_cert_folder, f"{username}_cert.pem")
-        with open(user_cert_path, "r") as cert_file:
-            user_cert_pem = cert_file.read()
-            sql.insertar_certificado_usuario(username, user_cert_pem)
 
     # Verificar la firma de cada resultado
     for resultado in resultados:

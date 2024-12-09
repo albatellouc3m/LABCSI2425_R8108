@@ -14,6 +14,17 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.x509 import NameOID, load_pem_x509_certificate
 from cryptography import x509
 import datetime
+import subprocess
+
+
+# Ruta base del proyecto
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AC_DIR = os.path.join(BASE_DIR, "Certificacion", "AC")
+
+# Configurar variables de entorno
+os.environ["BASE_DIR"] = BASE_DIR
+os.environ["AC_DIR"] = AC_DIR
+
 
 ####REGISTRO Y AUTENTIFICACION######
 # Función para registrar usuarios en la base de datos
@@ -393,17 +404,48 @@ def generate_and_save_csr(private_key_pem, username, output_folder):
     with open(csr_path, "wb") as csr_file:
         csr_file.write(csr.public_bytes(serialization.Encoding.PEM))
 
-
 def cargar_certificado(username):
     try:
-        path_certificado = f"./Certificacion/AC/nuevoscerts_por_usuario/{username}_cert.pem"
-        with open(path_certificado, "rb") as cert_file:
-            cert = cert_file.read().decode("utf-8")
-        sql.insertar_certificado_usuario(username, cert)
-        #Borrar archivo despues de haberlo procesado
-        os.remove(path_certificado)
-        return f"certificado de {username} insertado correctamente en la base de datos"
+        ca_cert_path = os.path.join(os.environ["AC_DIR"], "ac1cert.pem")
+        with open(ca_cert_path, "r") as ca_cert_file:
+            ca_cert_pem = ca_cert_file.read()
     except FileNotFoundError:
-        f"certificado de {username} ya estaba presente en la base de datos"
-    except Exception as e:
-        return f"Error procesando el certificado de {username}: {e}"
+        return 1, "El certificado de la AC no se encontró.", None, None
+
+    # Devolver certificado del usuario si lo tuviera
+
+    user_cert_pem = sql.obtener_certificado_usuario(username)
+    return 0, "No errors while retrieving certificates", user_cert_pem, ca_cert_pem
+
+def emitir_certificado(username):
+        # Ruta al CSR que ya se había generado antes
+        csr_path = os.path.join(os.environ["AC_DIR"], "solicitudes", f"{username}_req.pem")
+
+        # Crear carpeta para el usuario
+        user_cert_folder = os.path.join(os.environ["AC_DIR"], "..", username)  # Subir un nivel desde AC
+        os.makedirs(user_cert_folder, exist_ok=True)
+
+        # Generar certificado con OpenSSL
+        openssl_config_path = os.path.join(os.environ["AC_DIR"], "openssl_AC1.cnf")
+        if not os.path.exists(openssl_config_path):
+            return 1, f"El archivo de configuración OpenSSL no se encontró en: {openssl_config_path}"
+
+        # Automáticamente proporcionar entrada para crear el certificado
+        texto = "certificado"
+        command = [
+            "openssl", "ca", "-batch",
+            "-in", csr_path,
+            "-notext",
+            "-config", openssl_config_path,
+            "-out", os.path.join(user_cert_folder, f"{username}_cert.pem"),
+            "-passin", "stdin"
+        ]
+        print("La AC va a proceder a generar el certificado del usuario.")
+        subprocess.run(command, input=texto.encode(), check=True)
+
+        # Leer y guardar el certificado generado
+        user_cert_path = os.path.join(user_cert_folder, f"{username}_cert.pem")
+        with open(user_cert_path, "r") as cert_file:
+            user_cert_pem = cert_file.read()
+            sql.insertar_certificado_usuario(username, user_cert_pem)
+        return 0, f"La autoridad de certifiacion genero exitosamente el certificado para {username} y se guardo en la base de datos", user_cert_pem
