@@ -29,12 +29,23 @@ def home():
 def register_user():
     if request.method == "POST":
         # Procesar el formulario de registro
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
         name = request.form['name']
         surname1 = request.form['surname1']
         surname2 = request.form['surname2']
-        email = request.form['email']
+        email = request.form['email'].strip()
+
+        # Validar datos del formulario
+        if not username or len(username) < 3:
+            app.logger.debug("El nombre de usuario debe tener al menos 3 caracteres.")
+            return redirect("/register")
+        if not password or len(password) < 8:
+            app.logger.debug("La contraseña debe tener al menos 8 caracteres.")
+            return redirect("/register")
+        if not data_management.validate_email(email):
+            app.logger.debug("Correo electrónico inválido.")
+            return redirect("/register")
 
         # El salt que usa cada usuario para generar su clave se mantendra constante haciendo así que su clave sea siempre la misma. Esto resulta util para poder compartirla con sus amigos.
         salt = os.urandom(16)
@@ -44,7 +55,6 @@ def register_user():
         private_key, public_key = data_management.generate_user_keys(username, encryption_key)
 
         print(f"DEBUG: private_key_pem: {private_key.decode()}")
-
         print(f"DEBUG: username={username}, type={type(username)}")
         print(f"DEBUG: encryption_key={encryption_key}, type={type(encryption_key)}")
 

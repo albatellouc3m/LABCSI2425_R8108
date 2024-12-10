@@ -15,6 +15,7 @@ from cryptography.x509 import NameOID, load_pem_x509_certificate
 from cryptography import x509
 import datetime
 import subprocess
+import re
 
 
 # Ruta base del proyecto
@@ -47,6 +48,9 @@ def registrar_usuario(username, password, name, surname1, surname2, email, salt,
 
     return sql.insertar_usuario(username, pswd_hash, encrypted_email, encrypted_name, encrypted_surname1, encrypted_surname2, salt, encrypted_private_key)
 
+def validate_email(email):
+    regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(regex, email) is not None
 
 def hash_password(password):
     # Generar un salt y hashear la contraseña
@@ -190,17 +194,19 @@ def encriptar_respuestas(respuestas, resultado, description, key, salt):
 ####MANEJO DE DATOS######
 # Función para guardar respuestas y calcular el resultado encriptado
 def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, encryption_key, salt):
-    # Primero, guardar las respuestas del usuario llamando a guardar_respuestas
+    # Primero, guardar las respuestas (en claro) del usuario llamando a guardar_respuestas
     status, message = sql.guardar_respuestas(username, name_test, preguntas, respuestas)
     if status != 0:
         return status, message, None, None
 
+    # Despues, Calculamos los resultados en base a las respuestas guardadas en la base de datos y se guardan en la base de datos (en claro)
     status, message = sql.calcular_resultado(username, name_test)
     if status != 0:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
         sql.borrar_ultimas_respuestas(username)
         return status, message, None, None
 
+    # Cargamos los resultados que están guardados (en claro) en la base de datos
     status, message, id_resultado, resultado, description = sql.recuperar_resultado(username, name_test)
     if status != 0:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
@@ -208,7 +214,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
         sql.borrar_ultimo_resultado(username)
         return status, message, None, None
 
-    # Encriptar las respuestas y el resultado
+    # Encriptamos las respuestas y el resultado
     try:
         respuestas_encriptadas, resultado_encriptado, descripcion_encriptada = encriptar_respuestas(respuestas, resultado, description, encryption_key, salt)
     except Exception as e:
@@ -217,7 +223,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
         sql.borrar_ultimo_resultado(username)
         return 1, f"fallo al encriptar respuestas: {e}", None, None
 
-    # Actualizar las respuestas y el resultado encriptadas
+    # Guardamos las respuestas cifradas en la base de datos, substituyendo los datos en claro
     status, message = sql.guardar_respuestas_encriptadas(username, name_test, preguntas, respuestas_encriptadas)
     if status != 0:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
@@ -225,7 +231,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
         sql.borrar_ultimo_resultado(username)
         return status, message, None, None
 
-    # Generar la firma digital
+    # Generar firma digital
     data_to_sign = f"{resultado}:{description}"
     try:
         encrypted_private_key_pem = sql.obtener_clave_privada(username)
@@ -242,6 +248,7 @@ def calcular_y_guardar_resultado(username, name_test, preguntas, respuestas, enc
 
         return 1, f"fallo al firmar el resultado: {e}", None, None
 
+    # Guardamos los resultados cifrados junto con su firma en la base de datos, substituyendo los datos en claro
     status, message = sql.guardar_resultado_encriptado_con_firma(id_resultado, resultado_encriptado, descripcion_encriptada, signature)
     if status != 0:
         # Si algo sale mal borramos de la base de datos los resultados y respuestas del usuario para asegurarnos de que no se quedan guardados en clar
