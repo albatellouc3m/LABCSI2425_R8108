@@ -201,18 +201,6 @@ def ver_amigos(username):
         return f"fallo al ver amistades: {str(e)}"
 
 
-def grabar_amistad(username1, username2, key_user1, key_user2):
-    cursor.execute(
-        "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
-        (username1, username2, username2, username1)
-    )
-    cursor.execute(
-        "INSERT INTO friends (username1, username2, status, key_user2) VALUES (%s, %s, 'aceptado', %s), (%s, %s, 'aceptado', %s);",
-        (username1, username2, key_user2, username2, username1, key_user1)
-    )
-    db.commit()
-
-
 def borrar_amistad(username1, username2):
     cursor.execute(
         "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
@@ -245,6 +233,18 @@ def ver_solicitudes(username):
     except Exception as e:
         db.rollback()
         return f"fallo al ver solicitudes: {str(e)}"
+
+
+def grabar_amistad(username1, username2, key_user1, key_user2):
+    cursor.execute(
+        "DELETE FROM friends WHERE (username1 = %s AND username2 = %s) OR (username1 = %s AND username2 = %s);",
+        (username1, username2, username2, username1)
+    )
+    cursor.execute(
+        "INSERT INTO friends (username1, username2, status, key_user2) VALUES (%s, %s, 'aceptado', %s), (%s, %s, 'aceptado', %s);",
+        (username1, username2, key_user2, username2, username1, key_user1)
+    )
+    db.commit()
 
 
 def coger_key_solicitante(solicitante, solicitado):

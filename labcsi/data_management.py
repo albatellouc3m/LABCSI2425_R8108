@@ -290,13 +290,18 @@ def crear_solicitud(username, friend_username, key_encriptada):
 
 
 def crear_amistad(username, friend, key, salt):
+    # Recuperar la clave del solicitante, la cual esta encriptada con la clave del sistema
     friend_key_encriptada = sql.coger_key_solicitante(friend, username)
+    # Descifrar la clave del solicitante
     friend_key = desencriptar_datos_clave_sistema(friend_key_encriptada)
-    friend_salt = sql.obtener_salt_usuario(friend)
+
     # Encriptamos la clave del que acepta la solicitud (username) con la clave del solicitante (friend)
+    friend_salt = sql.obtener_salt_usuario(friend)
     username_encripted_key = encriptar_datos_con_clave_derivada(key, friend_key, friend_salt)
     # Encriptamos la clave del solicitante (friend) con la clave del que acepta la solicitud (username)
     friend_encripted_key = encriptar_datos_con_clave_derivada(friend_key, key, salt)
+
+    #Guardar claves encriptadas en la base de datos
     sql.grabar_amistad(username, friend, username_encripted_key, friend_encripted_key)
 
 ####Firma######
